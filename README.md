@@ -555,6 +555,7 @@ async function timedConversion(filePath, passphrase) {
     throw error;
   }
 }
+```
 
 ## 🏗️ Requirements
 
