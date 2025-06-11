@@ -64,9 +64,6 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "dependencies": {
-    "argon2-browser": "^1.18.0"
-  },
   "devDependencies": {
     "eslint": "^8.0.0",
     "c8": "^8.0.0"

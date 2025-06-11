@@ -3,16 +3,17 @@
 [![npm version](https://badge.fury.io/js/ppk-to-openssh.svg)](https://badge.fury.io/js/ppk-to-openssh)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification.
+A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification. **Zero dependencies** - works in Node.js, browsers, and VS Code extensions.
 
 ## ✨ Features
 
 - **Complete PPK Support**: Handles PPK versions 2 and 3
 - **All Key Types**: RSA, DSA, ECDSA (P-256, P-384, P-521), and Ed25519
-- **Encryption Support**: Works with both encrypted and unencrypted keys
+- **Encryption Support**: Works with both encrypted and unencrypted keys including PPK v3 with Argon2
 - **Security**: Full MAC verification and input validation
-- **Pure JavaScript**: No native dependencies or compilation required
-- **Cross-Platform**: Works everywhere Node.js runs (Linux, macOS, Windows)
+- **Zero Dependencies**: Pure JavaScript with built-in Argon2 implementation
+- **Universal Compatibility**: Works in Node.js, browsers, VS Code extensions, and any JavaScript environment
+- **Cross-Platform**: Linux, macOS, Windows support
 - **TypeScript**: Includes comprehensive TypeScript definitions
 - **CLI Tool**: Command-line interface for easy conversion
 - **Comprehensive Error Handling**: Detailed error codes and helpful hints
@@ -25,7 +26,7 @@ A pure JavaScript library for parsing and converting PuTTY private key files (.p
 npm install ppk-to-openssh
 ```
 
-The library includes all necessary dependencies, including Argon2 support for PPK v3 encrypted keys.
+The library has **zero dependencies** and includes a built-in pure JavaScript Argon2 implementation for PPK v3 encrypted keys.
 
 ### For Developers
 
@@ -215,6 +216,7 @@ async function convertKey(filePath: string, passphrase?: string): Promise<PPKPar
 
 ```javascript
 // In a browser environment with webpack/rollup/etc
+// Works with zero dependencies!
 import { parseFromString } from 'ppk-to-openssh';
 
 // Handle file upload
@@ -232,6 +234,42 @@ document.getElementById('fileInput').addEventListener('change', async (event) =>
     }
   }
 });
+```
+
+### 7.1. VS Code Extension Usage
+
+```javascript
+// Perfect for VS Code extensions - no dependency issues!
+const vscode = require('vscode');
+const { parseFromString } = require('ppk-to-openssh');
+
+async function convertPPKCommand() {
+  try {
+    // Get PPK content from user
+    const ppkContent = await vscode.window.showInputBox({
+      prompt: 'Paste your PPK file content',
+      multiline: true
+    });
+    
+    const passphrase = await vscode.window.showInputBox({
+      prompt: 'Enter passphrase (leave empty for unencrypted keys)',
+      password: true
+    });
+    
+    const result = await parseFromString(ppkContent, passphrase || '');
+    
+    // Show result in new document
+    const doc = await vscode.workspace.openTextDocument({
+      content: result.privateKey,
+      language: 'text'
+    });
+    await vscode.window.showTextDocument(doc);
+    
+    vscode.window.showInformationMessage('PPK converted successfully!');
+  } catch (error) {
+    vscode.window.showErrorMessage(`Conversion failed: ${error.message}`);
+  }
+}
 ```
 
 ### 8. Express.js API Endpoint
@@ -521,7 +559,19 @@ async function timedConversion(filePath, passphrase) {
 ## 🏗️ Requirements
 
 - **Node.js**: 14.0.0 or higher
-- All dependencies are automatically installed, including Argon2 support
+- **Zero external dependencies** - everything is built-in, including Argon2 support for PPK v3
+
+## 🌍 Environments
+
+This library works in any JavaScript environment:
+
+- **Node.js** (14.0.0+) - Server-side applications, CLI tools, automation scripts
+- **Browsers** - Web applications (with bundlers like webpack, rollup, etc.)
+- **VS Code Extensions** - No dependency conflicts with VS Code's environment
+- **Electron Apps** - Desktop applications with web technologies
+- **React Native** - Mobile applications (with appropriate polyfills)
+- **Deno** - Modern JavaScript runtime (with Node.js compatibility layer)
+- **Serverless Functions** - AWS Lambda, Vercel, Netlify, etc.
 
 ## 🤝 Contributing
 

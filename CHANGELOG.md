@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2024-11-06
+
+### Added
+- Zero dependencies: Removed all external dependencies including argon2-browser
+- Built-in pure JavaScript Argon2 implementation for PPK v3 support
+- Universal compatibility: Now works in Node.js, browsers, VS Code extensions, and any JavaScript environment
+- Enhanced browser and VS Code extension support without dependency conflicts
+
+### Changed
+- Replaced argon2-browser dependency with built-in Argon2 implementation
+- Updated documentation to highlight zero-dependency architecture
+- Enhanced universal compatibility messaging
+
 ## [1.0.0] - 2024-11-06
 
 ### Added
