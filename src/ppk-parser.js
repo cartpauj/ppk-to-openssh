@@ -243,18 +243,16 @@ class PPKParser {
 
     if (ppkData.version === 3 && ppkData.argon2.flavor) {
       // PPK v3 uses Argon2 for key derivation
-      // Try to load argon2-browser module
+      // Load argon2-browser module
       if (!argon2Module) {
         try {
-          // For browser compatibility, you might use dynamic import
-          // argon2Module = await import('argon2-browser');
           argon2Module = require('argon2-browser');
         } catch (e) {
           throw new PPKError(
             'PPK v3 encrypted keys require "argon2-browser" package',
             'MISSING_DEPENDENCY',
             { 
-              hint: 'Install with: npm install argon2-browser',
+              hint: 'The argon2-browser dependency should be automatically installed',
               originalError: e.message
             }
           );
@@ -942,66 +940,3 @@ class BinaryReader {
 module.exports = PPKParser;
 module.exports.PPKParser = PPKParser;
 module.exports.PPKError = PPKError;
-
-// Example usage with comprehensive error handling:
-/*
-const fs = require('fs');
-const { PPKParser, PPKError } = require('./ppk-parser');
-
-async function convertPPKToOpenSSH(ppkFilePath, passphrase) {
-  const parser = new PPKParser();
-  
-  try {
-    // Check file exists and size
-    const stats = await fs.promises.stat(ppkFilePath);
-    if (stats.size > parser.maxFileSize) {
-      throw new Error(`File too large (${stats.size} bytes)`);
-    }
-    
-    // Read file
-    const ppkContent = await fs.promises.readFile(ppkFilePath, 'utf8');
-    
-    // Parse with timeout
-    const parsePromise = parser.parse(ppkContent, passphrase);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Parsing timeout after 5 seconds')), 5000)
-    );
-    
-    const result = await Promise.race([parsePromise, timeoutPromise]);
-    
-    console.log('Public Key:');
-    console.log(result.publicKey);
-    console.log('\nPrivate Key:');
-    console.log(result.privateKey);
-    console.log('\nFingerprint:');
-    console.log(result.fingerprint);
-    
-    // Save the keys
-    const keyName = result.curve ? `id_${result.curve.toLowerCase()}` : 'id_rsa';
-    await fs.promises.writeFile(keyName, result.privateKey);
-    await fs.promises.writeFile(keyName + '.pub', result.publicKey);
-    
-    console.log(`\nKeys saved to ${keyName} and ${keyName}.pub`);
-    
-  } catch (error) {
-    // Handle different error types
-    if (error.code === 'ENOENT') {
-      console.error(`Error: File not found: ${ppkFilePath}`);
-    } else if (error instanceof PPKError) {
-      console.error(`Error: ${error.message}`);
-      if (error.details.hint) {
-        console.error(`Hint: ${error.details.hint}`);
-      }
-      // Log error code for programmatic handling
-      console.error(`Error code: ${error.code}`);
-    } else {
-      console.error(`Unexpected error: ${error.message}`);
-    }
-    
-    process.exit(1);
-  }
-}
-
-// Convert a PPK file
-convertPPKToOpenSSH('./mykey.ppk', 'mypassphrase');
-*/

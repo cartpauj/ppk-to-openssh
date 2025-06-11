@@ -1,0 +1,74 @@
+{
+  "name": "ppk-to-openssh",
+  "version": "1.0.0",
+  "description": "A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification.",
+  "main": "lib/index.js",
+  "module": "lib/index.mjs",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.mjs",
+      "require": "./lib/index.js",
+      "types": "./lib/index.d.ts"
+    }
+  },
+  "bin": {
+    "ppk-to-openssh": "./bin/cli.js"
+  },
+  "files": [
+    "lib/**/*",
+    "bin/**/*",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "npm run build:cjs && npm run build:esm && npm run build:types",
+    "build:cjs": "mkdir -p lib && cp src/index.js lib/index.js && cp src/ppk-parser.js lib/ppk-parser.js",
+    "build:esm": "node scripts/build-esm.js",
+    "build:types": "cp src/index.d.ts lib/index.d.ts",
+    "test": "node test/test.js",
+    "test:coverage": "c8 npm test",
+    "lint": "eslint src/ test/ bin/",
+    "prepublishOnly": "npm run build && npm test",
+    "clean": "rm -rf lib"
+  },
+  "keywords": [
+    "ppk",
+    "putty",
+    "openssh",
+    "ssh",
+    "key",
+    "conversion",
+    "crypto",
+    "rsa",
+    "dsa",
+    "ecdsa",
+    "ed25519",
+    "private-key",
+    "public-key"
+  ],
+  "author": {
+    "name": "Paul C",
+    "url": "https://github.com/cartpauj"
+  },
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cartpauj/ppk-to-openssh.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cartpauj/ppk-to-openssh/issues"
+  },
+  "homepage": "https://github.com/cartpauj/ppk-to-openssh#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "argon2-browser": "^1.18.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "c8": "^8.0.0"
+  }
+}
