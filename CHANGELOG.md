@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2024-11-06
+
+### Fixed
+- Resolved "Cannot read properties of undefined (reading '0')" crash when parsing PPK v3 files
+- Simplified Argon2 implementation to prevent memory access errors
+- PPK v3 files no longer crash the parser
+
+### Known Issues
+- PPK v3 full support still in development due to complex Argon2 requirements
+- PPK v3 files may still fail MAC verification (decryption needs correct Argon2)
+- PPK v2 files work perfectly
+
+### Notes
+- This release resolves the original crash reported by users
+- Full PPK v3 support requires a complete Argon2 implementation matching PuTTY's exact algorithm
+
 ## [1.1.5] - 2024-11-06
 
 ### Fixed
