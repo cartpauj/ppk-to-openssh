@@ -3,15 +3,16 @@
 [![npm version](https://badge.fury.io/js/ppk-to-openssh.svg)](https://badge.fury.io/js/ppk-to-openssh)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification. **Zero dependencies** - works in Node.js, browsers, and VS Code extensions.
+A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification. **Production-ready PPK v3 support** with universal Argon2 implementation that works in Node.js, browsers, and any JavaScript environment.
 
 ## ✨ Features
 
-- **Complete PPK Support**: Handles PPK versions 2 and 3
+- **Complete PPK Support**: Handles PPK versions 2 and 3 with full feature parity
 - **All Key Types**: RSA, DSA, ECDSA (P-256, P-384, P-521), and Ed25519
-- **Encryption Support**: Works with both encrypted and unencrypted keys including PPK v3 with Argon2
-- **Security**: Full MAC verification and input validation
-- **Zero Dependencies**: Pure JavaScript with built-in Argon2 implementation
+- **Production-Ready PPK v3**: Full Argon2id/Argon2i/Argon2d support with HMAC-SHA-256 verification
+- **Universal Argon2**: WebAssembly-based implementation works in browsers and Node.js
+- **Security**: Full MAC verification, input validation, and cryptographic best practices
+- **Minimal Dependencies**: Only one dependency (hash-wasm) for universal Argon2 support
 - **Universal Compatibility**: Works in Node.js, browsers, VS Code extensions, and any JavaScript environment
 - **Cross-Platform**: Linux, macOS, Windows support
 - **TypeScript**: Includes comprehensive TypeScript definitions
@@ -26,7 +27,7 @@ A pure JavaScript library for parsing and converting PuTTY private key files (.p
 npm install ppk-to-openssh
 ```
 
-The library has **zero dependencies** and includes a built-in pure JavaScript Argon2 implementation for PPK v3 encrypted keys.
+The library uses **hash-wasm** for universal Argon2 support, ensuring PPK v3 compatibility across all JavaScript environments.
 
 ### For Developers
 
@@ -216,7 +217,7 @@ async function convertKey(filePath: string, passphrase?: string): Promise<PPKPar
 
 ```javascript
 // In a browser environment with webpack/rollup/etc
-// Works with zero dependencies!
+// Universal Argon2 support via WebAssembly!
 import { parseFromString } from 'ppk-to-openssh';
 
 // Handle file upload
@@ -239,7 +240,7 @@ document.getElementById('fileInput').addEventListener('change', async (event) =>
 ### 7.1. VS Code Extension Usage
 
 ```javascript
-// Perfect for VS Code extensions - no dependency issues!
+// Perfect for VS Code extensions - minimal dependencies!
 const vscode = require('vscode');
 const { parseFromString } = require('ppk-to-openssh');
 
@@ -461,7 +462,8 @@ try {
 - `INVALID_MAC` - Wrong passphrase or corrupted file
 - `UNSUPPORTED_ALGORITHM` - Unsupported key algorithm
 - `FILE_TOO_LARGE` - File exceeds size limit
-- `MISSING_DEPENDENCY` - Required dependency not found
+- `UNSUPPORTED_ARGON2` - Unsupported Argon2 variant
+- `UNSUPPORTED_ENCRYPTION` - Unsupported encryption method
 
 ### Types
 
@@ -486,6 +488,17 @@ interface PPKParseResult {
 | ECDSA P-384 | ✅ | ✅ | ✅ | secp384r1 |
 | ECDSA P-521 | ✅ | ✅ | ✅ | secp521r1 |
 | Ed25519 | ✅ | ✅ | ✅ | Modern curve |
+
+## 🚀 PPK v3 Features
+
+PPK v3 support includes all advanced security features:
+
+- **Argon2 Key Derivation**: Full support for Argon2id, Argon2i, and Argon2d variants
+- **Enhanced Security**: HMAC-SHA-256 MAC verification (vs SHA-1 in PPK v2)  
+- **AES-256-CBC Encryption**: Industry-standard symmetric encryption
+- **Memory-Hard Functions**: Protection against brute-force attacks
+- **Universal Compatibility**: WebAssembly-based Argon2 works everywhere
+- **Production Ready**: Tested against PuTTY-generated PPK v3 files
 
 ## 🛠️ Advanced Usage
 
@@ -559,8 +572,8 @@ async function timedConversion(filePath, passphrase) {
 
 ## 🏗️ Requirements
 
-- **Node.js**: 14.0.0 or higher
-- **Zero external dependencies** - everything is built-in, including Argon2 support for PPK v3
+- **Node.js**: 14.0.0 or higher  
+- **Dependencies**: Only hash-wasm for universal Argon2 support across all environments
 
 ## 🌍 Environments
 
@@ -589,4 +602,5 @@ GPL-3.0 License - see [LICENSE](LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 - PuTTY team for the PPK format specification
-- OpenSSH project for the target format standards
+- OpenSSH project for the target format standards  
+- [hash-wasm](https://github.com/Daninet/hash-wasm) for universal Argon2 implementation
