@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2024-11-06
+
+### Fixed
+- Fixed "Cannot read properties of undefined" errors in PPK parsing
+- Added defensive programming for all split() operations to handle malformed PPK files
+- Improved error handling for edge cases in PPK file structure parsing
+
 ## [1.1.2] - 2024-11-06
 
 ### Fixed

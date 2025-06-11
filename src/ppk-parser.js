@@ -366,36 +366,47 @@ class PPKParser {
 
       if (trimmed.startsWith('PuTTY-User-Key-File-')) {
         const parts = trimmed.split(':');
-        // Extract version from "PuTTY-User-Key-File-2: ssh-rsa"
-        const headerPart = parts[0]; // "PuTTY-User-Key-File-2"
-        const versionMatch = headerPart.match(/PuTTY-User-Key-File-(\d+)/);
-        data.version = versionMatch ? parseInt(versionMatch[1]) : 2;
-        
-        if (parts.length > 1) {
-          data.algorithm = parts[1].trim();
+        if (parts && parts.length > 0) {
+          // Extract version from "PuTTY-User-Key-File-2: ssh-rsa"
+          const headerPart = parts[0]; // "PuTTY-User-Key-File-2"
+          const versionMatch = headerPart.match(/PuTTY-User-Key-File-(\d+)/);
+          data.version = versionMatch ? parseInt(versionMatch[1]) : 2;
+          
+          if (parts.length > 1) {
+            data.algorithm = parts[1].trim();
+          }
         }
       } else if (trimmed.startsWith('Encryption:')) {
-        data.encryption = trimmed.split(':')[1].trim();
+        const parts = trimmed.split(':');
+        data.encryption = parts.length > 1 ? parts[1].trim() : 'none';
       } else if (trimmed.startsWith('Comment:')) {
         data.comment = trimmed.split(':').slice(1).join(':').trim();
       } else if (trimmed.startsWith('Public-Lines:')) {
-        lineCount = parseInt(trimmed.split(':')[1].trim());
+        const parts = trimmed.split(':');
+        lineCount = parts.length > 1 ? parseInt(parts[1].trim()) : 0;
         currentSection = 'public';
       } else if (trimmed.startsWith('Private-Lines:')) {
-        lineCount = parseInt(trimmed.split(':')[1].trim());
+        const parts = trimmed.split(':');
+        lineCount = parts.length > 1 ? parseInt(parts[1].trim()) : 0;
         currentSection = 'private';
       } else if (trimmed.startsWith('Private-MAC:')) {
-        data.privateMac = trimmed.split(':')[1].trim();
+        const parts = trimmed.split(':');
+        data.privateMac = parts.length > 1 ? parts[1].trim() : '';
       } else if (trimmed.startsWith('Key-Derivation:')) {
-        data.argon2.flavor = trimmed.split(':')[1].trim();
+        const parts = trimmed.split(':');
+        data.argon2.flavor = parts.length > 1 ? parts[1].trim() : '';
       } else if (trimmed.startsWith('Argon2-Memory:')) {
-        data.argon2.memory = parseInt(trimmed.split(':')[1].trim());
+        const parts = trimmed.split(':');
+        data.argon2.memory = parts.length > 1 ? parseInt(parts[1].trim()) : 0;
       } else if (trimmed.startsWith('Argon2-Passes:')) {
-        data.argon2.passes = parseInt(trimmed.split(':')[1].trim());
+        const parts = trimmed.split(':');
+        data.argon2.passes = parts.length > 1 ? parseInt(parts[1].trim()) : 0;
       } else if (trimmed.startsWith('Argon2-Parallelism:')) {
-        data.argon2.parallelism = parseInt(trimmed.split(':')[1].trim());
+        const parts = trimmed.split(':');
+        data.argon2.parallelism = parts.length > 1 ? parseInt(parts[1].trim()) : 0;
       } else if (trimmed.startsWith('Argon2-Salt:')) {
-        data.argon2.salt = trimmed.split(':')[1].trim();
+        const parts = trimmed.split(':');
+        data.argon2.salt = parts.length > 1 ? parts[1].trim() : '';
       } else if (currentSection && lineCount > 0) {
         if (currentSection === 'public') {
           data.publicLines.push(trimmed);
