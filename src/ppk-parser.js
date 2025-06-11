@@ -365,8 +365,12 @@ class PPKParser {
       const trimmed = line.trim();
 
       if (trimmed.startsWith('PuTTY-User-Key-File-')) {
-        data.version = parseInt(trimmed.split('-').pop().replace(':', ''));
         const parts = trimmed.split(':');
+        // Extract version from "PuTTY-User-Key-File-2: ssh-rsa"
+        const headerPart = parts[0]; // "PuTTY-User-Key-File-2"
+        const versionMatch = headerPart.match(/PuTTY-User-Key-File-(\d+)/);
+        data.version = versionMatch ? parseInt(versionMatch[1]) : 2;
+        
         if (parts.length > 1) {
           data.algorithm = parts[1].trim();
         }
