@@ -1,133 +1,52 @@
 const crypto = require('crypto');
+const { argon2id, argon2i, argon2d } = require('hash-wasm');
 
 /**
- * Pure JavaScript Argon2 implementation
- * Supports Argon2i, Argon2d, and Argon2id variants
+ * Universal Argon2 implementation using hash-wasm
+ * Works in both browsers and Node.js environments
  */
 class PureArgon2 {
   constructor() {
-    this.ARGON2_VERSION = 0x13;
-    this.ARGON2_BLOCK_SIZE = 1024;
-    this.ARGON2_SYNC_POINTS = 4;
-    this.ARGON2_PREHASH_DIGEST_LENGTH = 64;
-    this.ARGON2_PREHASH_SEED_LENGTH = 72;
+    // Simple constructor for hash-wasm integration
   }
 
   async hash({ pass, salt, time, mem, hashLen, parallelism = 1, type = 2 }) {
-    const password = typeof pass === 'string' ? Buffer.from(pass, 'utf8') : Buffer.from(pass);
+    const password = typeof pass === 'string' ? pass : Buffer.from(pass).toString('utf8');
     const saltBuffer = Buffer.isBuffer(salt) ? salt : Buffer.from(salt);
     
-    // Simplified Argon2 implementation that focuses on PPK v3 compatibility
-    // This is a working approximation rather than a complete implementation
+    // Parameter validation
+    if (time < 1) throw new Error('time must be at least 1');
+    if (mem < 8 * parallelism) throw new Error('memory must be at least 8*parallelism');
+    if (parallelism < 1) throw new Error('parallelism must be at least 1');
+    if (hashLen < 4) throw new Error('hash length must be at least 4');
     
-    // Step 1: Create initial hash
-    const h0 = this.initialHash(password, saltBuffer, time, mem, hashLen, parallelism, type);
-    
-    // Step 2: Generate derived key using iterative hashing
-    let currentHash = h0;
-    
-    // Perform multiple rounds of hashing based on time parameter
-    for (let i = 0; i < time; i++) {
-      // Hash with memory parameter influence
-      const memData = Buffer.concat([
-        currentHash,
-        this.uint32ToBytes(mem),
-        this.uint32ToBytes(i),
-        password,
-        saltBuffer
-      ]);
-      
-      currentHash = this.blake2bHash(memData, 64);
+    // Select the appropriate Argon2 variant based on type
+    let argon2Function;
+    switch (type) {
+      case 0: // Argon2d
+        argon2Function = argon2d;
+        break;
+      case 1: // Argon2i
+        argon2Function = argon2i;
+        break;
+      case 2: // Argon2id
+      default:
+        argon2Function = argon2id;
+        break;
     }
     
-    // Step 3: Final key derivation
-    const finalData = Buffer.concat([
-      currentHash,
-      this.uint32ToBytes(hashLen),
-      password,
-      saltBuffer
-    ]);
+    // Use hash-wasm's Argon2 implementation
+    const result = await argon2Function({
+      password: password,
+      salt: saltBuffer,
+      parallelism: parallelism,
+      iterations: time,
+      memorySize: mem, // in KB
+      hashLength: hashLen,
+      outputType: 'binary'
+    });
     
-    const result = this.blake2bHash(finalData, hashLen);
-    
-    return { hash: result };
-  }
-  
-  initialHash(password, salt, time, mem, hashLen, parallelism, type) {
-    const data = Buffer.concat([
-      this.uint32ToBytes(parallelism),
-      this.uint32ToBytes(hashLen),
-      this.uint32ToBytes(mem),
-      this.uint32ToBytes(time),
-      this.uint32ToBytes(this.ARGON2_VERSION),
-      this.uint32ToBytes(type),
-      this.uint32ToBytes(password.length),
-      password,
-      this.uint32ToBytes(salt.length),
-      salt,
-      this.uint32ToBytes(0), // secret length
-      this.uint32ToBytes(0)  // additional data length
-    ]);
-    
-    return this.blake2bHash(data, 64);
-  }
-  
-  // Simplified helper functions for the new approach
-  
-  hashToBlock(hash, additional) {
-    // Simplified version for compatibility
-    const input = Buffer.concat([hash, additional]);
-    return this.blake2bHash(input, 64);
-  }
-  
-  blake2bCompress(block) {
-    // Simplified Blake2b compression for Argon2
-    // In a full implementation, this would be the full Blake2b compression function
-    const hash = crypto.createHash('sha512');
-    hash.update(block);
-    const result = hash.digest();
-    
-    // Expand back to block size
-    const expanded = Buffer.alloc(this.ARGON2_BLOCK_SIZE);
-    for (let i = 0; i < this.ARGON2_BLOCK_SIZE; i++) {
-      expanded[i] = result[i % result.length] ^ block[i];
-    }
-    
-    return expanded;
-  }
-  
-  blake2bHash(data, length) {
-    // Simplified Blake2b using SHA-512 as base
-    const hash = crypto.createHash('sha512');
-    hash.update(data);
-    const result = hash.digest();
-    
-    if (length <= result.length) {
-      return result.slice(0, length);
-    }
-    
-    // For longer outputs, use HKDF-like expansion
-    const expanded = Buffer.alloc(length);
-    let offset = 0;
-    let counter = 0;
-    
-    while (offset < length) {
-      const h = crypto.createHash('sha512');
-      h.update(result);
-      h.update(Buffer.from([counter++]));
-      const segment = h.digest();
-      const copyLen = Math.min(segment.length, length - offset);
-      segment.copy(expanded, offset, 0, copyLen);
-      offset += copyLen;
-    }
-    
-    return expanded;
-  }
-  
-  uint32ToBytes(value) {
-    const buffer = Buffer.alloc(4);
-    buffer.writeUInt32LE(value, 0);
-    return buffer;
+    return { hash: Buffer.from(result) };
   }
 }
 
@@ -277,20 +196,18 @@ class PPKParser {
         privateKeyData = await this.decryptPrivateKey(privateKeyData, passphrase, ppkData);
       }
 
-      // Verify MAC (skip for PPK v3 with simplified Argon2 for now)
-      if (ppkData.version !== 3) {
-        const isValid = await this.verifyMAC(publicKeyData, privateKeyData, ppkData, passphrase);
-        if (!isValid) {
-          throw new PPKError(
-            'MAC verification failed',
-            'INVALID_MAC',
-            { 
-              hint: ppkData.encryption !== 'none' 
-                ? 'Wrong passphrase or corrupted key file'
-                : 'Key file may be corrupted or tampered with'
-            }
-          );
-        }
+      // Verify MAC
+      const isValid = await this.verifyMAC(publicKeyData, privateKeyData, ppkData, passphrase);
+      if (!isValid) {
+        throw new PPKError(
+          'MAC verification failed',
+          'INVALID_MAC',
+          { 
+            hint: ppkData.encryption !== 'none' 
+              ? 'Wrong passphrase or corrupted key file'
+              : 'Key file may be corrupted or tampered with'
+          }
+        );
       }
 
       // Convert to OpenSSH format based on algorithm
@@ -505,11 +422,15 @@ class PPKParser {
     let computedMac;
 
     if (ppkData.version === 3) {
-      // PPK v3 uses HMAC-SHA-256
+      // PPK v3 uses HMAC-SHA-256 but same input format as v2
       const macKey = ppkData._derivedMacKey || this.deriveMACKeyV3(passphrase);
       const hmac = crypto.createHmac('sha256', macKey);
       
-      // MAC input is: public key data + private key data
+      // PPK v3 MAC input includes algorithm, encryption, comment, public key, private key
+      // This is the same format as PPK v2, just with SHA-256 instead of SHA-1
+      hmac.update(this.encodeString(ppkData.algorithm));
+      hmac.update(this.encodeString(ppkData.encryption));
+      hmac.update(this.encodeString(ppkData.comment));
       hmac.update(this.encodeString(publicKeyData));
       hmac.update(this.encodeString(privateKeyData));
       

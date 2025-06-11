@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2024-12-16
+
+### Added
+- Complete PPK v3 support with Argon2id encryption
+- Universal browser and Node.js compatibility via hash-wasm integration
+- Production-ready PPK v3 file parsing for SSH connections
+
+### Changed
+- Replaced custom Argon2 implementation with proven hash-wasm library
+- Improved error handling and debugging information
+- Enhanced MAC verification for PPK v3 files
+
+### Fixed
+- PPK v3 MAC verification now works correctly with HMAC-SHA-256
+- Argon2id key derivation produces correct output for PuTTY compatibility
+- PPK v3 files with encrypted keys now decrypt properly for SSH use
+
+### Technical Details
+- Integrated hash-wasm (~11KB) for WebAssembly-based Argon2 implementation
+- Fixed MAC calculation to use algorithm + encryption + comment + keys format
+- Maintained full backward compatibility with PPK v2 files
+- Added comprehensive test coverage for PPK v3 workflows
+
 ## [1.1.6] - 2024-11-06
 
 ### Fixed
