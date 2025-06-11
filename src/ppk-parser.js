@@ -286,8 +286,22 @@ class PPKParser {
       // Decode public key with error handling
       let publicKeyData, privateKeyData;
       try {
-        publicKeyData = Buffer.from(ppkData.publicLines.join(''), 'base64');
-        privateKeyData = Buffer.from(ppkData.privateLines.join(''), 'base64');
+        if (!ppkData.publicLines || ppkData.publicLines.length === 0) {
+          throw new Error('No public key data found');
+        }
+        if (!ppkData.privateLines || ppkData.privateLines.length === 0) {
+          throw new Error('No private key data found');
+        }
+        
+        const publicBase64 = ppkData.publicLines.join('');
+        const privateBase64 = ppkData.privateLines.join('');
+        
+        if (!publicBase64 || !privateBase64) {
+          throw new Error('Empty key data');
+        }
+        
+        publicKeyData = Buffer.from(publicBase64, 'base64');
+        privateKeyData = Buffer.from(privateBase64, 'base64');
       } catch (e) {
         throw new PPKError(
           'Invalid PPK data: corrupted base64 encoding',
@@ -334,11 +348,21 @@ class PPKParser {
         throw error;
       }
       
-      // Wrap unexpected errors
+      // Wrap unexpected errors with more context
       throw new PPKError(
         `Failed to parse PPK file: ${error.message}`,
         'PARSE_ERROR',
-        { originalError: error }
+        { 
+          originalError: error,
+          stack: error.stack,
+          ppkDataStructure: ppkData ? {
+            version: ppkData.version,
+            algorithm: ppkData.algorithm,
+            encryption: ppkData.encryption,
+            publicLinesCount: ppkData.publicLines ? ppkData.publicLines.length : 'undefined',
+            privateLinesCount: ppkData.privateLines ? ppkData.privateLines.length : 'undefined'
+          } : 'undefined'
+        }
       );
     }
   }
@@ -640,8 +664,10 @@ class PPKParser {
     const privateKeyDer = this.createRSAPrivateKeyDER(n, e, d, p, q, dP, dQ, iqmp);
     
     // Convert to PEM
+    const base64Data = privateKeyDer.toString('base64');
+    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
     const privateKeyPem = '-----BEGIN RSA PRIVATE KEY-----\n' +
-      privateKeyDer.toString('base64').match(/.{1,64}/g).join('\n') +
+      base64Lines.join('\n') +
       '\n-----END RSA PRIVATE KEY-----\n';
 
     // Create OpenSSH public key
@@ -679,8 +705,10 @@ class PPKParser {
     const privateKeyDer = this.createDSAPrivateKeyDER(p, q, g, y, x);
     
     // Convert to PEM
+    const base64Data = privateKeyDer.toString('base64');
+    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
     const privateKeyPem = '-----BEGIN DSA PRIVATE KEY-----\n' +
-      privateKeyDer.toString('base64').match(/.{1,64}/g).join('\n') +
+      base64Lines.join('\n') +
       '\n-----END DSA PRIVATE KEY-----\n';
 
     // Create OpenSSH public key
@@ -721,8 +749,10 @@ class PPKParser {
     const privateKeyDer = this.createECPrivateKeyDER(oid, privateScalar, publicPoint);
     
     // Convert to PEM
+    const base64Data = privateKeyDer.toString('base64');
+    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
     const privateKeyPem = '-----BEGIN EC PRIVATE KEY-----\n' +
-      privateKeyDer.toString('base64').match(/.{1,64}/g).join('\n') +
+      base64Lines.join('\n') +
       '\n-----END EC PRIVATE KEY-----\n';
 
     // Create OpenSSH public key
@@ -785,8 +815,10 @@ class PPKParser {
       this.encodeBuffer(paddedKeyData)
     ]);
 
+    const base64Data = privateKeyStructure.toString('base64');
+    const base64Lines = base64Data.match(/.{1,70}/g) || [base64Data];
     const privateKeyPem = '-----BEGIN OPENSSH PRIVATE KEY-----\n' +
-      privateKeyStructure.toString('base64').match(/.{1,70}/g).join('\n') +
+      base64Lines.join('\n') +
       '\n-----END OPENSSH PRIVATE KEY-----\n';
 
     const publicKeySSH = `ssh-ed25519 ${publicKeyData.toString('base64')} ${comment}`;
