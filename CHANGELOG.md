@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2024-11-06
+
+### Fixed
+- Fixed "Cannot read properties of undefined" errors in PPK v3 Argon2 processing
+- Improved Argon2 memory management and reference indexing
+- Added safety checks to prevent accessing uninitialized memory blocks
+- Resolved variable scoping issue in error handling
+- PPK v3 files now parse without crashes (MAC verification needs refinement)
+
+### Known Issues
+- PPK v3 MAC verification may fail due to simplified Argon2 implementation
+- Working on full Argon2 specification compliance in next release
+
 ## [1.1.4] - 2024-11-06
 
 ### Fixed

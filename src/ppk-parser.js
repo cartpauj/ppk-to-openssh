@@ -96,26 +96,43 @@ class PureArgon2 {
       
       // Generate pseudo-random reference
       const prevIndex = currentIndex - 1;
-      const refIndex = this.indexAlpha(memory[prevIndex], pass, slice, lane, i, memoryBlocks, parallelism, type);
+      const refIndex = this.indexAlpha(memory[prevIndex], pass, slice, lane, i, memoryBlocks, parallelism, type, currentIndex);
       
-      // Compression function
-      memory[currentIndex] = this.compress(memory[prevIndex], memory[refIndex]);
+      // Ensure both blocks exist before compression
+      if (memory[prevIndex] && memory[refIndex]) {
+        memory[currentIndex] = this.compress(memory[prevIndex], memory[refIndex]);
+      } else {
+        // Fallback: use first block if reference is invalid
+        memory[currentIndex] = this.compress(memory[prevIndex] || memory[0], memory[0]);
+      }
     }
   }
   
-  indexAlpha(block, pass, slice, lane, index, memoryBlocks, parallelism, type) {
+  indexAlpha(block, pass, slice, lane, index, memoryBlocks, parallelism, type, currentIndex) {
     // Simplified reference generation - extract pseudo-random value from block
     const pseudoRand = block.readUInt32LE(0) ^ block.readUInt32LE(4);
     
-    // Calculate reference window
-    const segmentLength = Math.floor(memoryBlocks / (parallelism * this.ARGON2_SYNC_POINTS));
-    const referenceWindow = pass === 0 ? slice * segmentLength + index - 1 : memoryBlocks - 1;
+    // Simple safe indexing: only reference blocks that have been computed
+    // In the first pass, only reference blocks before current position
+    let maxValidIndex;
+    if (pass === 0) {
+      maxValidIndex = Math.max(1, currentIndex - 1);
+    } else {
+      maxValidIndex = memoryBlocks - 1;
+    }
     
-    // Map to valid reference
-    return pseudoRand % Math.max(1, referenceWindow);
+    // Generate a safe reference index
+    const refIndex = pseudoRand % maxValidIndex;
+    
+    // Ensure we never reference the current block or beyond
+    return Math.min(refIndex, currentIndex - 1);
   }
   
   compress(x, y) {
+    if (!x || !y) {
+      throw new Error(`Invalid blocks for compression: x=${!!x}, y=${!!y}`);
+    }
+    
     const result = Buffer.alloc(this.ARGON2_BLOCK_SIZE);
     
     // XOR the blocks
@@ -211,6 +228,7 @@ class PPKParser {
    * @returns {Object} Object containing publicKey and privateKey in OpenSSH format
    */
   async parse(ppkContent, passphrase = '') {
+    let ppkData;
     try {
       // Input validation
       if (!ppkContent || typeof ppkContent !== 'string') {
@@ -256,7 +274,7 @@ class PPKParser {
       }
 
       const lines = ppkContent.split(/\r?\n/);
-      const ppkData = this.parsePPKStructure(lines);
+      ppkData = this.parsePPKStructure(lines);
     
       // Validate PPK version
       if (ppkData.version !== 2 && ppkData.version !== 3) {
