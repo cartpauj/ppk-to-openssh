@@ -71,11 +71,24 @@ npx ppk-to-openssh mykey.ppk
 # With passphrase for encrypted keys
 npx ppk-to-openssh mykey.ppk -p mypassphrase
 
+# Interactive mode - prompts for passphrase if needed (input hidden)
+npx ppk-to-openssh encrypted.ppk
+
 # Specify output location
 npx ppk-to-openssh mykey.ppk id_rsa --output ~/.ssh/
 
 # Show help
 npx ppk-to-openssh --help
+```
+
+#### Interactive Passphrase Prompting
+
+The CLI automatically detects encrypted PPK files and prompts for passphrases when needed:
+
+```bash
+$ npx ppk-to-openssh encrypted.ppk
+This PPK file is encrypted. Enter passphrase: [hidden input]
+Conversion completed successfully
 ```
 
 ### JavaScript API

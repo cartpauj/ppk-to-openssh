@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2024-12-16
+
+### Added
+- Interactive passphrase prompting in CLI for encrypted PPK files
+- Hidden input for passphrase entry (no echo to terminal)
+- Automatic detection when passphrase is required
+- Enhanced CLI help text with interactive mode documentation
+
+### Changed
+- CLI now automatically prompts for passphrases when encountering encrypted files (if no -p flag provided)
+- Updated README with interactive mode examples and usage patterns
+- Improved user experience for encrypted PPK file conversion
+
+### Technical Details
+- Pure JavaScript implementation using Node.js stdin raw mode
+- Maintains full backward compatibility with existing -p flag
+- No additional dependencies required
+- Graceful error handling for Ctrl+C and other input scenarios
+
 ## [1.2.0] - 2024-12-16
 
 ### Added

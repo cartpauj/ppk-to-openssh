@@ -4,6 +4,49 @@ const fs = require('fs');
 const path = require('path');
 const { parseFromFile, PPKError } = require('../lib/index.js');
 
+// Prompt for passphrase with hidden input
+function promptPassphrase(message = 'Enter passphrase: ') {
+  return new Promise((resolve) => {
+    const stdin = process.stdin;
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+    
+    process.stdout.write(message);
+    
+    let input = '';
+    const onData = (char) => {
+      switch (char) {
+        case '\n':
+        case '\r':
+        case '\u0004': // Ctrl+D
+          stdin.setRawMode(false);
+          stdin.pause();
+          stdin.removeListener('data', onData);
+          process.stdout.write('\n');
+          resolve(input);
+          break;
+        case '\u0003': // Ctrl+C
+          process.stdout.write('\n');
+          process.exit(1);
+          break;
+        case '\u007f': // Backspace
+          if (input.length > 0) {
+            input = input.slice(0, -1);
+          }
+          break;
+        default:
+          if (char >= ' ') {
+            input += char;
+          }
+          break;
+      }
+    };
+    
+    stdin.on('data', onData);
+  });
+}
+
 function showUsage() {
   console.log(`
 ppk-to-openssh - Convert PuTTY PPK files to OpenSSH format
@@ -28,6 +71,11 @@ Examples:
   ppk-to-openssh mykey.ppk id_rsa -p mypassphrase
   ppk-to-openssh mykey.ppk --output ~/.ssh/
   ppk-to-openssh encrypted.ppk --passphrase secret --verbose
+  ppk-to-openssh encrypted.ppk  # Will prompt for passphrase if needed
+
+Interactive Mode:
+  If a PPK file is encrypted and no passphrase is provided via -p,
+  the tool will automatically prompt for the passphrase (input hidden).
 
 Output files:
   <prefix>        - Private key file
@@ -114,7 +162,21 @@ async function main() {
       console.log(`Output prefix: ${options.outputPrefix}`);
     }
 
-    const result = await parseFromFile(options.inputFile, options.passphrase);
+    let result;
+    let passphrase = options.passphrase;
+    
+    // Try parsing with provided passphrase (or empty string)
+    try {
+      result = await parseFromFile(options.inputFile, passphrase);
+    } catch (error) {
+      // If passphrase is required and we don't have one, prompt for it
+      if (error instanceof PPKError && error.code === 'PASSPHRASE_REQUIRED' && !passphrase) {
+        passphrase = await promptPassphrase('This PPK file is encrypted. Enter passphrase: ');
+        result = await parseFromFile(options.inputFile, passphrase);
+      } else {
+        throw error; // Re-throw other errors
+      }
+    }
 
     if (options.verbose) {
       console.log(`Key type: ${result.publicKey.split(' ')[0]}`);
