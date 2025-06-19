@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2024-12-19
+
+### Added
+- OpenSSH output format support for better ssh2-streams compatibility
+- Configurable output format via `outputFormat` option (pem/openssh)
+- Comprehensive OpenSSH private key format support for RSA and ECDSA
+
+### Fixed
+- PPK v3 unencrypted key MAC verification (critical bugfix)
+- Proper MAC key derivation for unencrypted PPK v3 files
+- Test coverage for MAC verification and output format options
+
+### Changed
+- Enhanced PPKParser constructor with outputFormat option
+- Improved backward compatibility (PEM remains default)
+- Updated documentation with OpenSSH format examples
+
+### Removed
+- Unnecessary development documentation files
+
 ## [1.2.3] - 2024-12-16
 
 ### Added
