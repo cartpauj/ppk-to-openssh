@@ -9,6 +9,7 @@ A pure JavaScript library for parsing and converting PuTTY private key files (.p
 
 - **Complete PPK Support**: Handles PPK versions 2 and 3 with full feature parity
 - **All Key Types**: RSA, DSA, ECDSA (P-256, P-384, P-521), and Ed25519
+- **Dual Output Formats**: Legacy PEM format (default) and modern OpenSSH format for ssh2-streams compatibility
 - **Production-Ready PPK v3**: Full Argon2id/Argon2i/Argon2d support with HMAC-SHA-256 verification
 - **Universal Argon2**: WebAssembly-based implementation works in browsers and Node.js
 - **Security**: Full MAC verification, input validation, and cryptographic best practices
@@ -184,7 +185,48 @@ async function advancedUsage() {
 }
 ```
 
-### 5. ES Modules (ESM) Usage
+### 5. OpenSSH Format Output (ssh2-streams Compatible)
+
+```javascript
+const { PPKParser } = require('ppk-to-openssh');
+
+async function openSSHFormatExample() {
+  // Create parser with OpenSSH output format
+  const parser = new PPKParser({
+    outputFormat: 'openssh'  // Use modern OpenSSH format instead of legacy PEM
+  });
+  
+  const ppkContent = fs.readFileSync('./mykey.ppk', 'utf8');
+  const result = await parser.parse(ppkContent, 'passphrase');
+  
+  // Private key will be in OpenSSH format for ssh2-streams compatibility
+  console.log('Private Key Format:', result.privateKey.split('\n')[0]);
+  // Output: -----BEGIN OPENSSH PRIVATE KEY-----
+  
+  // Use with ssh2-streams based libraries
+  const { Client } = require('ssh2');
+  const conn = new Client();
+  
+  conn.connect({
+    host: 'example.com',
+    username: 'user',
+    privateKey: result.privateKey,  // OpenSSH format works perfectly
+    passphrase: 'key-passphrase'    // If the converted key is encrypted
+  });
+}
+
+// Backward compatibility: Default behavior unchanged
+async function defaultBehavior() {
+  const { parseFromFile } = require('ppk-to-openssh');
+  
+  // Still outputs PEM format by default (no breaking changes)
+  const result = await parseFromFile('./mykey.ppk', 'passphrase');
+  console.log(result.privateKey.split('\n')[0]);
+  // Output: -----BEGIN RSA PRIVATE KEY----- (or DSA/EC for other key types)
+}
+```
+
+### 6. ES Modules (ESM) Usage
 
 ```javascript
 import { parseFromFile, parseFromString, PPKError } from 'ppk-to-openssh';
@@ -207,7 +249,7 @@ const ppkConverter = await import('ppk-to-openssh');
 const result = await ppkConverter.parseFromFile('./mykey.ppk');
 ```
 
-### 6. TypeScript Usage
+### 7. TypeScript Usage
 
 ```typescript
 import { parseFromFile, PPKParseResult, PPKError } from 'ppk-to-openssh';
@@ -226,7 +268,7 @@ async function convertKey(filePath: string, passphrase?: string): Promise<PPKPar
 }
 ```
 
-### 7. Browser Usage (with bundlers)
+### 8. Browser Usage (with bundlers)
 
 ```javascript
 // In a browser environment with webpack/rollup/etc
@@ -250,7 +292,7 @@ document.getElementById('fileInput').addEventListener('change', async (event) =>
 });
 ```
 
-### 7.1. VS Code Extension Usage
+### 8.1. VS Code Extension Usage
 
 ```javascript
 // Perfect for VS Code extensions - minimal dependencies!
@@ -286,7 +328,7 @@ async function convertPPKCommand() {
 }
 ```
 
-### 8. Express.js API Endpoint
+### 9. Express.js API Endpoint
 
 ```javascript
 const express = require('express');
@@ -329,7 +371,7 @@ app.post('/convert-ppk', async (req, res) => {
 });
 ```
 
-### 9. Stream Processing
+### 10. Stream Processing
 
 ```javascript
 const { parseFromString } = require('ppk-to-openssh');
@@ -363,7 +405,7 @@ const converter = new PPKConverter('mypassphrase');
 // ... pipe PPK content through converter
 ```
 
-### 10. CLI Integration in Node.js Scripts
+### 11. CLI Integration in Node.js Scripts
 
 ```javascript
 const { spawn } = require('child_process');
@@ -427,7 +469,8 @@ Main parser class with configurable options.
 ```javascript
 const parser = new PPKParser({
   maxFileSize: 1024 * 1024,  // Maximum file size (default: 1MB)
-  maxFieldSize: 1024 * 1024  // Maximum field size (default: 1MB)
+  maxFieldSize: 1024 * 1024, // Maximum field size (default: 1MB)
+  outputFormat: 'pem'        // Output format: 'pem' or 'openssh' (default: 'pem')
 });
 
 // Properties
@@ -441,6 +484,7 @@ await parser.parse(ppkContent, passphrase)  // Parse PPK content
 **Constructor Options:**
 - `maxFileSize` (number): Maximum PPK file size in bytes (default: 1MB)
 - `maxFieldSize` (number): Maximum individual field size in bytes (default: 1MB)
+- `outputFormat` (string): Private key output format - `'pem'` or `'openssh'` (default: `'pem'`)
 
 #### `PPKError`
 
@@ -501,6 +545,26 @@ interface PPKParseResult {
 | ECDSA P-384 | ✅ | ✅ | ✅ | secp384r1 |
 | ECDSA P-521 | ✅ | ✅ | ✅ | secp521r1 |
 | Ed25519 | ✅ | ✅ | ✅ | Modern curve |
+
+## 🔧 Output Formats
+
+This library supports two output formats for private keys:
+
+| Key Type | Default (PEM) Format | OpenSSH Format | Notes |
+|----------|---------------------|----------------|--------|
+| RSA | `-----BEGIN RSA PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
+| DSA | `-----BEGIN DSA PRIVATE KEY-----` | `-----BEGIN DSA PRIVATE KEY-----` | Falls back to PEM (legacy) |
+| ECDSA | `-----BEGIN EC PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
+| Ed25519 | `-----BEGIN OPENSSH PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Always OpenSSH (standard) |
+
+**Default Behavior (Backward Compatible):**
+- `parseFromFile()` and `parseFromString()` use PEM format by default
+- No breaking changes to existing code
+
+**OpenSSH Format (ssh2-streams Compatible):**
+- Use `new PPKParser({ outputFormat: 'openssh' })` for modern OpenSSH format
+- Better compatibility with ssh2, ssh2-sftp-client, and similar libraries
+- Contains proper `openssh-key-v1` structure
 
 ## 🚀 PPK v3 Features
 

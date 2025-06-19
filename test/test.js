@@ -232,6 +232,38 @@ Random content here`;
   }
 });
 
+// Test 11: Output format options
+suite.addTest('Output format options', () => {
+  // Test default format
+  const defaultParser = new PPKParser();
+  assert.strictEqual(defaultParser.options.outputFormat, undefined, 'Default should be undefined (uses PEM)');
+  
+  // Test PEM format explicitly
+  const pemParser = new PPKParser({ outputFormat: 'pem' });
+  assert.strictEqual(pemParser.options.outputFormat, 'pem', 'Should set PEM format');
+  
+  // Test OpenSSH format
+  const opensshParser = new PPKParser({ outputFormat: 'openssh' });
+  assert.strictEqual(opensshParser.options.outputFormat, 'openssh', 'Should set OpenSSH format');
+});
+
+// Test 12: PPK v3 MAC key derivation logic
+suite.addTest('PPK v3 MAC key derivation', () => {
+  const parser = new PPKParser();
+  
+  // Test unencrypted PPK v3 MAC key (should be empty buffer)
+  const unencryptedMacKey = parser.deriveMACKeyV3('');
+  assert(Buffer.isBuffer(unencryptedMacKey), 'Should return Buffer');
+  assert.strictEqual(unencryptedMacKey.length, 32, 'Should be 32 bytes');
+  assert(unencryptedMacKey.equals(Buffer.alloc(32)), 'Should be all zeros for unencrypted');
+  
+  // Test encrypted PPK v3 MAC key (should be derived from passphrase)
+  const encryptedMacKey = parser.deriveMACKeyV3('testpass');
+  assert(Buffer.isBuffer(encryptedMacKey), 'Should return Buffer');
+  assert.strictEqual(encryptedMacKey.length, 32, 'Should be 32 bytes');
+  assert(!encryptedMacKey.equals(Buffer.alloc(32)), 'Should not be all zeros for encrypted');
+});
+
 // Run the test suite
 if (require.main === module) {
   suite.run().catch(error => {

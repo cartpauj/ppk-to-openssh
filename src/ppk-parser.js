@@ -71,9 +71,10 @@ class PPKError extends Error {
 }
 
 class PPKParser {
-  constructor() {
+  constructor(options = {}) {
+    this.options = options;
     this.supportedAlgorithms = ['ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519'];
-    this.maxFileSize = 1024 * 1024; // 1MB limit
+    this.maxFileSize = options.maxFileSize || 1024 * 1024; // 1MB limit
   }
 
   /**
@@ -467,10 +468,16 @@ class PPKParser {
    * Derive MAC key for PPK v3
    */
   deriveMACKeyV3(passphrase) {
-    // For unencrypted keys in v3, the MAC key derivation is different
+    // For unencrypted keys in PPK v3, use an empty MAC key (32 zero bytes)
+    // This is different from PPK v2 and encrypted PPK v3 keys
+    if (!passphrase || passphrase === '') {
+      return Buffer.alloc(32); // Empty MAC key for unencrypted PPK v3
+    }
+    
+    // For encrypted keys, derive MAC key from passphrase
     const hash = crypto.createHash('sha256');
     hash.update('putty-private-key-file-mac-key');
-    hash.update(passphrase || '', 'utf8');
+    hash.update(passphrase, 'utf8');
     return hash.digest();
   }
 
@@ -488,17 +495,22 @@ class PPKParser {
    * Convert to OpenSSH format
    */
   async convertToOpenSSH(algorithm, publicKeyData, privateKeyData, comment) {
+    // Default to PEM format for backward compatibility
+    // Users can explicitly request OpenSSH format via options
+    const outputFormat = this.options.outputFormat || 'pem';
+    
     switch (algorithm) {
       case 'ssh-rsa':
-        return await this.convertRSAToOpenSSH(publicKeyData, privateKeyData, comment);
+        return await this.convertRSAToOpenSSH(publicKeyData, privateKeyData, comment, outputFormat);
       case 'ssh-dss':
-        return await this.convertDSAToOpenSSH(publicKeyData, privateKeyData, comment);
+        return await this.convertDSAToOpenSSH(publicKeyData, privateKeyData, comment, outputFormat);
       case 'ssh-ed25519':
+        // Ed25519 always uses OpenSSH format (it's the standard)
         return this.convertEd25519ToOpenSSH(publicKeyData, privateKeyData, comment);
       case 'ecdsa-sha2-nistp256':
       case 'ecdsa-sha2-nistp384':
       case 'ecdsa-sha2-nistp521':
-        return await this.convertECDSAToOpenSSH(algorithm, publicKeyData, privateKeyData, comment);
+        return await this.convertECDSAToOpenSSH(algorithm, publicKeyData, privateKeyData, comment, outputFormat);
       default:
         throw new PPKError(
           `Unsupported algorithm: ${algorithm}`,
@@ -514,7 +526,7 @@ class PPKParser {
   /**
    * Convert RSA key to OpenSSH format using Node.js crypto
    */
-  async convertRSAToOpenSSH(publicKeyData, privateKeyData, comment) {
+  async convertRSAToOpenSSH(publicKeyData, privateKeyData, comment, outputFormat = 'pem') {
     // Parse public key components
     const publicKey = this.parseSSHPublicKey(publicKeyData);
     
@@ -537,18 +549,27 @@ class PPKParser {
     const dP = dBigInt % (pBigInt - 1n);
     const dQ = dBigInt % (qBigInt - 1n);
 
-    // Create RSA private key in PKCS#1 DER format
-    const privateKeyDer = this.createRSAPrivateKeyDER(n, e, d, p, q, dP, dQ, iqmp);
-    
-    // Convert to PEM
-    const base64Data = privateKeyDer.toString('base64');
-    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
-    const privateKeyPem = '-----BEGIN RSA PRIVATE KEY-----\n' +
-      base64Lines.join('\n') +
-      '\n-----END RSA PRIVATE KEY-----\n';
-
     // Create OpenSSH public key
     const publicKeySSH = `ssh-rsa ${publicKeyData.toString('base64')} ${comment}`;
+
+    let privateKeyPem;
+    if (outputFormat === 'openssh') {
+      // Create OpenSSH private key format
+      privateKeyPem = this.createOpenSSHPrivateKey({
+        keyType: 'ssh-rsa',
+        publicKeyData,
+        privateKeyComponents: { n, e, d, p, q, iqmp },
+        comment
+      });
+    } else {
+      // Legacy PEM format
+      const privateKeyDer = this.createRSAPrivateKeyDER(n, e, d, p, q, dP, dQ, iqmp);
+      const base64Data = privateKeyDer.toString('base64');
+      const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
+      privateKeyPem = '-----BEGIN RSA PRIVATE KEY-----\n' +
+        base64Lines.join('\n') +
+        '\n-----END RSA PRIVATE KEY-----\n';
+    }
 
     return {
       privateKey: privateKeyPem,
@@ -560,7 +581,7 @@ class PPKParser {
   /**
    * Convert DSA key to OpenSSH format
    */
-  async convertDSAToOpenSSH(publicKeyData, privateKeyData, comment) {
+  async convertDSAToOpenSSH(publicKeyData, privateKeyData, comment, outputFormat = 'pem') {
     // Parse public key components
     const pubReader = new BinaryReader(publicKeyData);
     const keyType = pubReader.readString();
@@ -578,18 +599,18 @@ class PPKParser {
     const privReader = new BinaryReader(privateKeyData);
     const x = privReader.readBuffer(); // private key
 
-    // Create DSA private key in PKCS#1-like DER format
-    const privateKeyDer = this.createDSAPrivateKeyDER(p, q, g, y, x);
-    
-    // Convert to PEM
-    const base64Data = privateKeyDer.toString('base64');
-    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
-    const privateKeyPem = '-----BEGIN DSA PRIVATE KEY-----\n' +
-      base64Lines.join('\n') +
-      '\n-----END DSA PRIVATE KEY-----\n';
-
     // Create OpenSSH public key
     const publicKeySSH = `ssh-dss ${publicKeyData.toString('base64')} ${comment}`;
+
+    let privateKeyPem;
+    if (outputFormat === 'openssh') {
+      // DSA in OpenSSH format would require additional implementation
+      // For now, fallback to PEM format as DSA is legacy anyway
+      privateKeyPem = this.createDSAPrivateKeyPEM(p, q, g, y, x);
+    } else {
+      // Legacy PEM format
+      privateKeyPem = this.createDSAPrivateKeyPEM(p, q, g, y, x);
+    }
 
     return {
       privateKey: privateKeyPem,
@@ -599,9 +620,21 @@ class PPKParser {
   }
 
   /**
+   * Create DSA private key in PEM format
+   */
+  createDSAPrivateKeyPEM(p, q, g, y, x) {
+    const privateKeyDer = this.createDSAPrivateKeyDER(p, q, g, y, x);
+    const base64Data = privateKeyDer.toString('base64');
+    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
+    return '-----BEGIN DSA PRIVATE KEY-----\n' +
+      base64Lines.join('\n') +
+      '\n-----END DSA PRIVATE KEY-----\n';
+  }
+
+  /**
    * Convert ECDSA key to OpenSSH format
    */
-  async convertECDSAToOpenSSH(algorithm, publicKeyData, privateKeyData, comment) {
+  async convertECDSAToOpenSSH(algorithm, publicKeyData, privateKeyData, comment, outputFormat = 'pem') {
     // Parse public key components
     const pubReader = new BinaryReader(publicKeyData);
     const keyType = pubReader.readString();
@@ -622,18 +655,22 @@ class PPKParser {
     const curve = curveName.replace('nistp', 'P-');
     const oid = curveOIDs[curveName];
 
-    // Create EC private key in SEC1 DER format
-    const privateKeyDer = this.createECPrivateKeyDER(oid, privateScalar, publicPoint);
-    
-    // Convert to PEM
-    const base64Data = privateKeyDer.toString('base64');
-    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
-    const privateKeyPem = '-----BEGIN EC PRIVATE KEY-----\n' +
-      base64Lines.join('\n') +
-      '\n-----END EC PRIVATE KEY-----\n';
-
     // Create OpenSSH public key
     const publicKeySSH = `${keyType} ${publicKeyData.toString('base64')} ${comment}`;
+
+    let privateKeyPem;
+    if (outputFormat === 'openssh') {
+      // Create OpenSSH private key format for ECDSA
+      privateKeyPem = this.createOpenSSHPrivateKey({
+        keyType: keyType,
+        publicKeyData,
+        privateKeyComponents: { curveName, privateScalar, publicPoint },
+        comment
+      });
+    } else {
+      // Legacy PEM format
+      privateKeyPem = this.createECPrivateKeyPEM(oid, privateScalar, publicPoint);
+    }
 
     return {
       privateKey: privateKeyPem,
@@ -641,6 +678,18 @@ class PPKParser {
       fingerprint: this.generateFingerprint(publicKeyData),
       curve: curve
     };
+  }
+
+  /**
+   * Create EC private key in PEM format
+   */
+  createECPrivateKeyPEM(oid, privateScalar, publicPoint) {
+    const privateKeyDer = this.createECPrivateKeyDER(oid, privateScalar, publicPoint);
+    const base64Data = privateKeyDer.toString('base64');
+    const base64Lines = base64Data.match(/.{1,64}/g) || [base64Data];
+    return '-----BEGIN EC PRIVATE KEY-----\n' +
+      base64Lines.join('\n') +
+      '\n-----END EC PRIVATE KEY-----\n';
   }
 
   /**
@@ -652,22 +701,89 @@ class PPKParser {
     const keyType = reader.readString();
     const publicKey = reader.readBuffer();
 
-    // For Ed25519, the private key in PPK contains both private and public parts
+    // For Ed25519, the private key in PPK contains only the private key (32 bytes)
     const privReader = new BinaryReader(privateKeyData);
     const privateKey = privReader.readBuffer();
-    const publicKeyCheck = privReader.readBuffer();
 
-    // Create OpenSSH private key format for Ed25519
+    // Create OpenSSH private key format using common method
+    const privateKeyPem = this.createOpenSSHPrivateKey({
+      keyType: 'ssh-ed25519',
+      publicKeyData,
+      privateKeyComponents: { privateKey, publicKey },
+      comment
+    });
+
+    const publicKeySSH = `ssh-ed25519 ${publicKeyData.toString('base64')} ${comment}`;
+
+    return {
+      privateKey: privateKeyPem,
+      publicKey: publicKeySSH,
+      fingerprint: this.generateFingerprint(publicKeyData)
+    };
+  }
+
+  /**
+   * Create OpenSSH private key format - common method for all key types
+   */
+  createOpenSSHPrivateKey({ keyType, publicKeyData, privateKeyComponents, comment }) {
     const auth = 'none';
     const checkInt = crypto.randomBytes(4);
+    
+    let privateKeyBuffer;
+    if (keyType === 'ssh-ed25519') {
+      // Ed25519 specific encoding
+      privateKeyBuffer = Buffer.concat([privateKeyComponents.privateKey, privateKeyComponents.publicKey]);
+    } else if (keyType === 'ssh-rsa') {
+      // RSA specific encoding - SSH wire format
+      const { n, e, d, iqmp, p, q } = privateKeyComponents;
+      privateKeyBuffer = Buffer.concat([
+        this.encodeBuffer(n),
+        this.encodeBuffer(e),
+        this.encodeBuffer(d),
+        this.encodeBuffer(iqmp),
+        this.encodeBuffer(p),
+        this.encodeBuffer(q)
+      ]);
+    } else if (keyType.startsWith('ecdsa-sha2-')) {
+      // ECDSA specific encoding - SSH wire format
+      const { curveName, privateScalar, publicPoint } = privateKeyComponents;
+      privateKeyBuffer = Buffer.concat([
+        this.encodeBuffer(Buffer.from(curveName)),
+        this.encodeBuffer(publicPoint),
+        this.encodeBuffer(privateScalar)
+      ]);
+    }
+    
+    // Extract public key components (skip the key type prefix)
+    const pubReader = new BinaryReader(publicKeyData);
+    const pubKeyType = pubReader.readString();
+    let publicKeyComponents;
+    
+    if (keyType === 'ssh-ed25519') {
+      publicKeyComponents = pubReader.readBuffer();
+    } else if (keyType === 'ssh-rsa') {
+      const e = pubReader.readBuffer();
+      const n = pubReader.readBuffer();
+      publicKeyComponents = Buffer.concat([
+        this.encodeBuffer(e),
+        this.encodeBuffer(n)
+      ]);
+    } else if (keyType.startsWith('ecdsa-sha2-')) {
+      const curveName = pubReader.readString();
+      const publicPoint = pubReader.readBuffer();
+      publicKeyComponents = Buffer.concat([
+        this.encodeBuffer(Buffer.from(curveName)),
+        this.encodeBuffer(publicPoint)
+      ]);
+    }
     
     // Build the key data
     const keyData = Buffer.concat([
       checkInt,
       checkInt,
-      this.encodeBuffer(Buffer.from('ssh-ed25519')),
-      this.encodeBuffer(publicKey),
-      this.encodeBuffer(Buffer.concat([privateKey, publicKey])),
+      this.encodeBuffer(Buffer.from(keyType)),
+      this.encodeBuffer(publicKeyComponents),
+      this.encodeBuffer(privateKeyBuffer),
       this.encodeBuffer(Buffer.from(comment || ''))
     ]);
 
@@ -694,17 +810,9 @@ class PPKParser {
 
     const base64Data = privateKeyStructure.toString('base64');
     const base64Lines = base64Data.match(/.{1,70}/g) || [base64Data];
-    const privateKeyPem = '-----BEGIN OPENSSH PRIVATE KEY-----\n' +
+    return '-----BEGIN OPENSSH PRIVATE KEY-----\n' +
       base64Lines.join('\n') +
       '\n-----END OPENSSH PRIVATE KEY-----\n';
-
-    const publicKeySSH = `ssh-ed25519 ${publicKeyData.toString('base64')} ${comment}`;
-
-    return {
-      privateKey: privateKeyPem,
-      publicKey: publicKeySSH,
-      fingerprint: this.generateFingerprint(publicKeyData)
-    };
   }
 
   /**
