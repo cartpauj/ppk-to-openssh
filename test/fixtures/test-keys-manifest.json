@@ -1,0 +1,397 @@
+{
+  "generated": "2025-06-19T18:19:07.978Z",
+  "keys": [
+    {
+      "name": "rsa-1024-v2-nopass",
+      "type": "rsa",
+      "bits": 1024,
+      "version": 2,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-1024-v2-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-nopass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-nopass-pem.key"
+      }
+    },
+    {
+      "name": "rsa-1024-v2-pass",
+      "type": "rsa",
+      "bits": 1024,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "test123",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-1024-v2-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-pass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-pass-pem.key"
+      }
+    },
+    {
+      "name": "rsa-2048-v3-nopass",
+      "type": "rsa",
+      "bits": 2048,
+      "version": 3,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-2048-v3-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v3-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v3-nopass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v3-nopass-pem.key"
+      }
+    },
+    {
+      "name": "rsa-2048-v3-pass",
+      "type": "rsa",
+      "bits": 2048,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "test123",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-2048-v3-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v3-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v3-pass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v3-pass-pem.key"
+      }
+    },
+    {
+      "name": "rsa-4096-v3-complex",
+      "type": "rsa",
+      "bits": 4096,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "complex_pass!@#",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-4096-v3-complex.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-4096-v3-complex-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-4096-v3-complex-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-4096-v3-complex-pem.key"
+      }
+    },
+    {
+      "name": "dsa-1024-v2-nopass",
+      "type": "dsa",
+      "bits": 1024,
+      "version": 2,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/dsa-1024-v2-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v2-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v2-nopass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v2-nopass-pem.key"
+      }
+    },
+    {
+      "name": "dsa-1024-v2-pass",
+      "type": "dsa",
+      "bits": 1024,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "dsa_test",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/dsa-1024-v2-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v2-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v2-pass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v2-pass-pem.key"
+      }
+    },
+    {
+      "name": "dsa-1024-v3-nopass",
+      "type": "dsa",
+      "bits": 1024,
+      "version": 3,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/dsa-1024-v3-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v3-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v3-nopass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v3-nopass-pem.key"
+      }
+    },
+    {
+      "name": "dsa-1024-v3-pass",
+      "type": "dsa",
+      "bits": 1024,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "dsa_v3_test",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/dsa-1024-v3-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v3-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v3-pass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/dsa-1024-v3-pass-pem.key"
+      }
+    },
+    {
+      "name": "ecdsa-256-v2-nopass",
+      "type": "ecdsa",
+      "bits": 256,
+      "version": 2,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-256-v2-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v2-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v2-nopass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-256-v2-pass",
+      "type": "ecdsa",
+      "bits": 256,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "ecdsa_pass",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-256-v2-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v2-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v2-pass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-256-v3-nopass",
+      "type": "ecdsa",
+      "bits": 256,
+      "version": 3,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-256-v3-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v3-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v3-nopass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-384-v3-nopass",
+      "type": "ecdsa",
+      "bits": 384,
+      "version": 3,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-384-v3-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v3-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v3-nopass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-384-v3-pass",
+      "type": "ecdsa",
+      "bits": 384,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "p384_test",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-384-v3-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v3-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v3-pass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-521-v3-pass",
+      "type": "ecdsa",
+      "bits": 521,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "curve521!",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-521-v3-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-521-v3-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-521-v3-pass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ed25519-v2-nopass",
+      "type": "ed25519",
+      "bits": null,
+      "version": 2,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ed25519-v2-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v2-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v2-nopass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ed25519-v2-pass",
+      "type": "ed25519",
+      "bits": null,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "ed25519_test",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ed25519-v2-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v2-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v2-pass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ed25519-v3-nopass",
+      "type": "ed25519",
+      "bits": null,
+      "version": 3,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ed25519-v3-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v3-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v3-nopass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ed25519-v3-pass",
+      "type": "ed25519",
+      "bits": null,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "modern_crypto",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ed25519-v3-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v3-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v3-pass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "rsa-2048-v2-nopass",
+      "type": "rsa",
+      "bits": 2048,
+      "version": 2,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-2048-v2-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v2-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v2-nopass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v2-nopass-pem.key"
+      }
+    },
+    {
+      "name": "rsa-2048-v2-pass",
+      "type": "rsa",
+      "bits": 2048,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "test123",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-2048-v2-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v2-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v2-pass-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-2048-v2-pass-pem.key"
+      }
+    },
+    {
+      "name": "ecdsa-384-v2-nopass",
+      "type": "ecdsa",
+      "bits": 384,
+      "version": 2,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-384-v2-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v2-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v2-nopass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-384-v2-pass",
+      "type": "ecdsa",
+      "bits": 384,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "ecdsa_p384",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-384-v2-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v2-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-384-v2-pass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-521-v2-nopass",
+      "type": "ecdsa",
+      "bits": 521,
+      "version": 2,
+      "hasPassphrase": false,
+      "passphrase": "",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-521-v2-nopass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-521-v2-nopass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-521-v2-nopass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-521-v2-pass",
+      "type": "ecdsa",
+      "bits": 521,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "curve521_v2",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-521-v2-pass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-521-v2-pass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-521-v2-pass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "rsa-1024-v2-special",
+      "type": "rsa",
+      "bits": 1024,
+      "version": 2,
+      "hasPassphrase": true,
+      "passphrase": "p@ssw0rd!#$%^&*()",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/rsa-1024-v2-special.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-special-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-special-openssh.pub",
+        "pem": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/rsa-1024-v2-special-pem.key"
+      }
+    },
+    {
+      "name": "ed25519-v3-longpass",
+      "type": "ed25519",
+      "bits": null,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ed25519-v3-longpass.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v3-longpass-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ed25519-v3-longpass-openssh.pub",
+        "pem": null
+      }
+    },
+    {
+      "name": "ecdsa-256-v3-unicode",
+      "type": "ecdsa",
+      "bits": 256,
+      "version": 3,
+      "hasPassphrase": true,
+      "passphrase": "pásswōrd_ñeẅ_123",
+      "files": {
+        "ppk": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/ppk-keys/ecdsa-256-v3-unicode.ppk",
+        "openssh": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v3-unicode-openssh.key",
+        "opensshPub": "/home/cartpauj/cartpauj-github/ppk-to-openssh/test/fixtures/reference-keys/ecdsa-256-v3-unicode-openssh.pub",
+        "pem": null
+      }
+    }
+  ]
+}

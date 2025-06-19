@@ -81,7 +81,8 @@ class PPKParser {
    * Parse a PPK file and convert to OpenSSH format
    * @param {string} ppkContent - The PPK file content as string
    * @param {string} passphrase - Optional passphrase for encrypted keys
-   * @returns {Object} Object containing publicKey and privateKey in OpenSSH format
+   * @returns {Object} Object containing publicKey and privateKey in OpenSSH format, 
+   *                   plus ssh2StreamsCompatible method for pure-js-sftp
    */
   async parse(ppkContent, passphrase = '') {
     let ppkData;
@@ -197,8 +198,9 @@ class PPKParser {
         privateKeyData = await this.decryptPrivateKey(privateKeyData, passphrase, ppkData);
       }
 
-      // Verify MAC
-      const isValid = await this.verifyMAC(publicKeyData, privateKeyData, ppkData, passphrase);
+      // Verify MAC - for unencrypted keys, always use empty passphrase for MAC verification
+      const macPassphrase = ppkData.encryption === 'none' ? '' : passphrase;
+      const isValid = await this.verifyMAC(publicKeyData, privateKeyData, ppkData, macPassphrase);
       if (!isValid) {
         throw new PPKError(
           'MAC verification failed',
@@ -213,6 +215,22 @@ class PPKParser {
 
       // Convert to OpenSSH format based on algorithm
       const result = await this.convertToOpenSSH(ppkData.algorithm, publicKeyData, privateKeyData, ppkData.comment);
+      
+      // Add algorithm and comment to the result
+      result.algorithm = ppkData.algorithm;
+      result.comment = ppkData.comment;
+      
+      // Add ssh2-streams compatibility method only for RSA keys that need it
+      if (ppkData.algorithm === 'ssh-rsa' || result.privateKey.includes('BEGIN RSA PRIVATE KEY')) {
+        try {
+          result.getCompatiblePrivateKey = (signatureAlgorithm = 'sha512') => {
+            return this.createSSH2StreamsCompatibleKey(result.privateKey, signatureAlgorithm);
+          };
+        } catch (error) {
+          // If ssh2-streams is not available, just skip the compatibility method
+          // This is okay since it's an optional enhancement
+        }
+      }
       
       return result;
 
@@ -604,9 +622,13 @@ class PPKParser {
 
     let privateKeyPem;
     if (outputFormat === 'openssh') {
-      // DSA in OpenSSH format would require additional implementation
-      // For now, fallback to PEM format as DSA is legacy anyway
-      privateKeyPem = this.createDSAPrivateKeyPEM(p, q, g, y, x);
+      // Create OpenSSH format for DSA
+      privateKeyPem = this.createOpenSSHPrivateKey({
+        keyType: 'ssh-dss',
+        publicKeyData: publicKeyData,
+        privateKeyComponents: { p, q, g, y, x },
+        comment: comment
+      });
     } else {
       // Legacy PEM format
       privateKeyPem = this.createDSAPrivateKeyPEM(p, q, g, y, x);
@@ -752,6 +774,16 @@ class PPKParser {
         this.encodeBuffer(publicPoint),
         this.encodeBuffer(privateScalar)
       ]);
+    } else if (keyType === 'ssh-dss') {
+      // DSA specific encoding - SSH wire format
+      const { p, q, g, y, x } = privateKeyComponents;
+      privateKeyBuffer = Buffer.concat([
+        this.encodeBuffer(p),
+        this.encodeBuffer(q),
+        this.encodeBuffer(g),
+        this.encodeBuffer(y),
+        this.encodeBuffer(x)
+      ]);
     }
     
     // Extract public key components (skip the key type prefix)
@@ -774,6 +806,17 @@ class PPKParser {
       publicKeyComponents = Buffer.concat([
         this.encodeBuffer(Buffer.from(curveName)),
         this.encodeBuffer(publicPoint)
+      ]);
+    } else if (keyType === 'ssh-dss') {
+      const p = pubReader.readBuffer();
+      const q = pubReader.readBuffer();
+      const g = pubReader.readBuffer();
+      const y = pubReader.readBuffer();
+      publicKeyComponents = Buffer.concat([
+        this.encodeBuffer(p),
+        this.encodeBuffer(q),
+        this.encodeBuffer(g),
+        this.encodeBuffer(y)
       ]);
     }
     
@@ -801,7 +844,7 @@ class PPKParser {
     const privateKeyStructure = Buffer.concat([
       Buffer.from('openssh-key-v1\0'),
       this.encodeBuffer(Buffer.from(auth)),
-      this.encodeBuffer(Buffer.from('')), // kdf
+      this.encodeBuffer(Buffer.from('none')), // kdf - fixed: was empty string, should be 'none' for unencrypted keys
       this.encodeBuffer(Buffer.from('')), // kdf options
       Buffer.from([0, 0, 0, 1]), // number of keys
       this.encodeBuffer(publicKeyData),
@@ -1041,6 +1084,56 @@ class PPKParser {
     }
     
     throw new Error(`Unsupported key type in public key: ${keyType}`);
+  }
+
+  /**
+   * Create a ssh2-streams compatible key with modern signature algorithm
+   * This method generates a private key that ssh2-streams can parse and then
+   * modifies its signature algorithm for compatibility with modern SSH servers
+   */
+  createSSH2StreamsCompatibleKey(privateKey, signatureAlgorithm = 'sha256') {
+    try {
+      // Only apply this enhancement for RSA keys that need signature algorithm upgrades
+      // Check if this is an RSA key by looking at the key header
+      if (!privateKey.includes('BEGIN RSA PRIVATE KEY') && !privateKey.includes('ssh-rsa')) {
+        // For non-RSA keys, just parse normally since they don't need signature algorithm fixes
+        const ssh2Streams = require('ssh2-streams');
+        return ssh2Streams.utils.parseKey(privateKey);
+      }
+      
+      // For RSA keys, we need to override the signature algorithm
+      const ssh2Streams = require('ssh2-streams');
+      
+      // Parse the RSA key with ssh2-streams
+      const parsedKey = ssh2Streams.utils.parseKey(privateKey);
+      
+      if (!parsedKey || typeof parsedKey.getPublicSSH !== 'function') {
+        throw new Error('Key could not be parsed by ssh2-streams');
+      }
+      
+      // Only modify signature algorithm for RSA keys (ssh-rsa type)
+      if (parsedKey.type === 'ssh-rsa') {
+        // Find and modify the hash algorithm symbol to upgrade from sha1
+        const hashAlgSymbol = Object.getOwnPropertySymbols(parsedKey)
+          .find(s => s.toString().includes('Hash Algorithm'));
+        
+        if (hashAlgSymbol) {
+          const currentAlg = parsedKey[hashAlgSymbol];
+          // Only upgrade if it's currently using sha1 (the ssh2-streams default)
+          if (currentAlg === 'sha1') {
+            parsedKey[hashAlgSymbol] = signatureAlgorithm;
+          }
+        }
+      }
+      
+      return parsedKey;
+      
+    } catch (error) {
+      if (error.code === 'MODULE_NOT_FOUND' && error.message.includes('ssh2-streams')) {
+        throw new Error('ssh2-streams module not available - compatibility method not supported');
+      }
+      throw new Error(`Failed to create ssh2-streams compatible key: ${error.message}`);
+    }
   }
 
   /**

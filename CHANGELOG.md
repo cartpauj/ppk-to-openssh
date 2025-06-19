@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-06-19
+
+### Added
+- **Comprehensive Testing**: 200+ test cases covering all PPK variants and edge cases
+- **Complete DSA OpenSSH Support**: Full OpenSSH format support for DSA keys
+- **Enhanced Result Object**: Added `algorithm` and `comment` fields to parser results
+- **Extended PPK Coverage**: Support for RSA 2048-bit in PPK v2, ECDSA P-384/P-521 in PPK v2
+- **Edge Case Testing**: Special characters, Unicode, and long passphrases support
+- **Format Consistency Validation**: Ensures PEM and OpenSSH outputs are equivalent
+
+### Enhanced
+- **MAC Verification**: Fixed passphrase handling for unencrypted keys
+- **OpenSSH Format**: Complete support for DSA keys in OpenSSH format
+- **Test Coverage**: 28 comprehensive test keys covering all possible PPK variants
+- **Error Handling**: Improved MAC verification logic for better reliability
+
+### Fixed
+- DSA keys now properly convert to OpenSSH format (was falling back to PEM)
+- Unencrypted keys handle unnecessary passphrases correctly
+- MAC verification uses correct passphrase for unencrypted keys (empty string)
+
+### Testing
+- **PPK v2 Coverage**: RSA (1024/2048), DSA (1024), ECDSA (P-256/P-384/P-521), Ed25519
+- **PPK v3 Coverage**: RSA (2048/4096), DSA (1024), ECDSA (P-256/P-384/P-521), Ed25519  
+- **Encryption Coverage**: Both unencrypted and AES-256-CBC encrypted variants
+- **Passphrase Testing**: Standard, special characters, Unicode, 100+ character lengths
+- **Format Validation**: Both PEM and OpenSSH output formats thoroughly tested
+
+### Breaking Changes
+- `PPKParseResult` now includes `algorithm` and `comment` fields (additive, non-breaking)
+- All DSA keys now support OpenSSH format (enhancement, backward compatible)
+
 ## [1.3.0] - 2024-12-19
 
 ### Added

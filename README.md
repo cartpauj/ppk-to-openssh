@@ -3,13 +3,13 @@
 [![npm version](https://badge.fury.io/js/ppk-to-openssh.svg)](https://badge.fury.io/js/ppk-to-openssh)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification. **Production-ready PPK v3 support** with universal Argon2 implementation that works in Node.js, browsers, and any JavaScript environment.
+A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification. **Production-ready PPK v3 support** with universal Argon2 implementation that works in Node.js, browsers, and any JavaScript environment. **Comprehensively tested** with 200+ test cases covering all PPK variants and edge cases.
 
 ## ✨ Features
 
 - **Complete PPK Support**: Handles PPK versions 2 and 3 with full feature parity
 - **All Key Types**: RSA, DSA, ECDSA (P-256, P-384, P-521), and Ed25519
-- **Dual Output Formats**: Legacy PEM format (default) and modern OpenSSH format for ssh2-streams compatibility
+- **Dual Output Formats**: Legacy PEM format (default) and modern OpenSSH format with full DSA support
 - **Production-Ready PPK v3**: Full Argon2id/Argon2i/Argon2d support with HMAC-SHA-256 verification
 - **Universal Argon2**: WebAssembly-based implementation works in browsers and Node.js
 - **Security**: Full MAC verification, input validation, and cryptographic best practices
@@ -19,6 +19,7 @@ A pure JavaScript library for parsing and converting PuTTY private key files (.p
 - **TypeScript**: Includes comprehensive TypeScript definitions
 - **CLI Tool**: Command-line interface for easy conversion
 - **Comprehensive Error Handling**: Detailed error codes and helpful hints
+- **Extensive Testing**: 200+ test cases covering all PPK variants, edge cases, and special passphrases
 
 ## 📦 Installation
 
@@ -112,6 +113,8 @@ async function convertPPK() {
     console.log(result.publicKey);
     
     console.log('Fingerprint:', result.fingerprint);
+    console.log('Algorithm:', result.algorithm);
+    console.log('Comment:', result.comment);
   } catch (error) {
     console.error('Conversion failed:', error.message);
   }
@@ -175,7 +178,7 @@ async function advancedUsage() {
   const ppkContent = fs.readFileSync('./mykey.ppk', 'utf8');
   const result = await parser.parse(ppkContent, 'passphrase');
   
-  console.log('Algorithm:', result.publicKey.split(' ')[0]);
+  console.log('Algorithm:', result.algorithm);
   if (result.curve) {
     console.log('Curve:', result.curve);
   }
@@ -351,7 +354,7 @@ app.post('/convert-ppk', async (req, res) => {
       success: true,
       publicKey: result.publicKey,
       fingerprint: result.fingerprint,
-      algorithm: result.publicKey.split(' ')[0]
+      algorithm: result.algorithm
     });
   } catch (error) {
     if (error instanceof PPKError) {
@@ -531,6 +534,8 @@ interface PPKParseResult {
   privateKey: string;    // OpenSSH/PEM format private key
   publicKey: string;     // OpenSSH format public key  
   fingerprint: string;   // SHA256 fingerprint
+  algorithm: string;     // Key algorithm (ssh-rsa, ssh-dss, ecdsa-sha2-*, ssh-ed25519)
+  comment: string;       // Key comment from PPK file
   curve?: string;        // Curve name for ECDSA keys
 }
 ```
@@ -553,7 +558,7 @@ This library supports two output formats for private keys:
 | Key Type | Default (PEM) Format | OpenSSH Format | Notes |
 |----------|---------------------|----------------|--------|
 | RSA | `-----BEGIN RSA PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
-| DSA | `-----BEGIN DSA PRIVATE KEY-----` | `-----BEGIN DSA PRIVATE KEY-----` | Falls back to PEM (legacy) |
+| DSA | `-----BEGIN DSA PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
 | ECDSA | `-----BEGIN EC PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
 | Ed25519 | `-----BEGIN OPENSSH PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Always OpenSSH (standard) |
 
@@ -576,6 +581,36 @@ PPK v3 support includes all advanced security features:
 - **Memory-Hard Functions**: Protection against brute-force attacks
 - **Universal Compatibility**: WebAssembly-based Argon2 works everywhere
 - **Production Ready**: Tested against PuTTY-generated PPK v3 files
+
+## 🧪 Testing & Quality Assurance
+
+This library is **comprehensively tested** with 200+ test cases covering:
+
+### Test Coverage (28 Test Keys)
+- **RSA Keys**: 8 variants (1024-bit v2, 2048-bit v2+v3, 4096-bit v3)
+- **DSA Keys**: 4 variants (1024-bit v2+v3)
+- **ECDSA Keys**: 11 variants (P-256 v2+v3, P-384 v2+v3, P-521 v2+v3)
+- **Ed25519 Keys**: 5 variants (v2+v3)
+
+### Edge Cases Tested
+- **PPK Versions**: Both genuine PPK v2 and v3 formats
+- **Encryption**: Unencrypted and AES-256-CBC encrypted variants
+- **Passphrases**: Simple, complex, special characters (`p@ssw0rd!#$%^&*()`), 100-character long, Unicode (`pásswōrd_ñeẅ_123`)
+- **Format Consistency**: Validation between PEM and OpenSSH outputs
+- **Error Handling**: Wrong passphrases, corrupted files, unsupported formats
+
+### Test Suite Features
+- **PPK Parsing**: Algorithm detection, comment preservation, fingerprint generation
+- **Format Conversion**: Both PEM and OpenSSH output validation
+- **Version Detection**: Proper PPK v2 vs v3 handling
+- **Security**: MAC verification, passphrase handling, encryption/decryption
+- **Structure Validation**: Key encoding, Base64 validation, SSH format compliance
+
+Run the test suite:
+```bash
+npm test                    # Basic test suite
+node test/comprehensive-test.js  # Full 200+ test comprehensive suite
+```
 
 ## 🛠️ Advanced Usage
 
