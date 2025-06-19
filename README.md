@@ -9,11 +9,12 @@ A pure JavaScript library for parsing and converting PuTTY private key files (.p
 
 - **Complete PPK Support**: Handles PPK versions 2 and 3 with full feature parity
 - **All Key Types**: RSA, DSA, ECDSA (P-256, P-384, P-521), and Ed25519
+- **Pure JavaScript Encryption**: Encrypt output keys with pure JS for ALL key types (including Ed25519)
 - **Dual Output Formats**: Legacy PEM format (default) and modern OpenSSH format with full DSA support
 - **Production-Ready PPK v3**: Full Argon2id/Argon2i/Argon2d support with HMAC-SHA-256 verification
 - **Universal Argon2**: WebAssembly-based implementation works in browsers and Node.js
 - **Security**: Full MAC verification, input validation, and cryptographic best practices
-- **Minimal Dependencies**: Only one dependency (hash-wasm) for universal Argon2 support
+- **Minimal Dependencies**: Only sshpk and hash-wasm for universal compatibility
 - **Universal Compatibility**: Works in Node.js, browsers, VS Code extensions, and any JavaScript environment
 - **Cross-Platform**: Linux, macOS, Windows support
 - **TypeScript**: Includes comprehensive TypeScript definitions
@@ -137,7 +138,43 @@ async function convertFromString() {
 }
 ```
 
-### 3. Batch Processing Multiple Keys
+### 3. Convert with Output Encryption (NEW!)
+
+```javascript
+const { parseFromString } = require('ppk-to-openssh');
+
+async function convertWithEncryption() {
+  const ppkContent = fs.readFileSync('./mykey.ppk', 'utf8');
+  
+  // Convert and encrypt the output private key
+  const result = await parseFromString(ppkContent, 'input-passphrase', {
+    encrypt: true,
+    outputPassphrase: 'new-secure-password'
+  });
+  
+  // Private key is now encrypted with 'new-secure-password'
+  console.log('Encrypted private key:', result.privateKey.split('\n')[0]);
+  // Output: -----BEGIN OPENSSH PRIVATE KEY----- (encrypted)
+  
+  fs.writeFileSync('./id_rsa', result.privateKey);
+  fs.writeFileSync('./id_rsa.pub', result.publicKey);
+}
+
+// Works with ALL key types including Ed25519!
+async function encryptEd25519() {
+  const ppkContent = fs.readFileSync('./ed25519-key.ppk', 'utf8');
+  
+  const result = await parseFromString(ppkContent, '', {
+    encrypt: true,
+    outputPassphrase: 'secure-ed25519-password'
+  });
+  
+  // Ed25519 key successfully encrypted with pure JavaScript!
+  console.log('Ed25519 key encrypted successfully');
+}
+```
+
+### 4. Batch Processing Multiple Keys
 
 ```javascript
 const { parseFromFile } = require('ppk-to-openssh');
@@ -164,7 +201,7 @@ async function convertMultipleKeys(directory, passphrase = '') {
 }
 ```
 
-### 4. Using the PPKParser Class with Options
+### 5. Using the PPKParser Class with Options
 
 ```javascript
 const { PPKParser } = require('ppk-to-openssh');
@@ -188,7 +225,7 @@ async function advancedUsage() {
 }
 ```
 
-### 5. OpenSSH Format Output (ssh2-streams Compatible)
+### 6. OpenSSH Format Output (ssh2-streams Compatible)
 
 ```javascript
 const { PPKParser } = require('ppk-to-openssh');
@@ -229,7 +266,7 @@ async function defaultBehavior() {
 }
 ```
 
-### 6. ES Modules (ESM) Usage
+### 7. ES Modules (ESM) Usage
 
 ```javascript
 import { parseFromFile, parseFromString, PPKError } from 'ppk-to-openssh';
@@ -252,7 +289,7 @@ const ppkConverter = await import('ppk-to-openssh');
 const result = await ppkConverter.parseFromFile('./mykey.ppk');
 ```
 
-### 7. TypeScript Usage
+### 8. TypeScript Usage
 
 ```typescript
 import { parseFromFile, PPKParseResult, PPKError } from 'ppk-to-openssh';
@@ -271,7 +308,7 @@ async function convertKey(filePath: string, passphrase?: string): Promise<PPKPar
 }
 ```
 
-### 8. Browser Usage (with bundlers)
+### 9. Browser Usage (with bundlers)
 
 ```javascript
 // In a browser environment with webpack/rollup/etc
@@ -295,7 +332,7 @@ document.getElementById('fileInput').addEventListener('change', async (event) =>
 });
 ```
 
-### 8.1. VS Code Extension Usage
+### 10. VS Code Extension Usage
 
 ```javascript
 // Perfect for VS Code extensions - minimal dependencies!
@@ -331,7 +368,7 @@ async function convertPPKCommand() {
 }
 ```
 
-### 9. Express.js API Endpoint
+### 11. Express.js API Endpoint
 
 ```javascript
 const express = require('express');
@@ -374,7 +411,7 @@ app.post('/convert-ppk', async (req, res) => {
 });
 ```
 
-### 10. Stream Processing
+### 12. Stream Processing
 
 ```javascript
 const { parseFromString } = require('ppk-to-openssh');
@@ -408,7 +445,7 @@ const converter = new PPKConverter('mypassphrase');
 // ... pipe PPK content through converter
 ```
 
-### 11. CLI Integration in Node.js Scripts
+### 13. CLI Integration in Node.js Scripts
 
 ```javascript
 const { spawn } = require('child_process');
@@ -445,23 +482,39 @@ async function convertAndUseSSH(ppkPath, host, command) {
 
 ### Functions
 
-#### `parseFromFile(filePath, passphrase?)`
+#### `parseFromFile(filePath, passphrase?, options?)`
 
 Convert a PPK file from the filesystem.
 
 - **filePath** `string` - Path to the PPK file
 - **passphrase** `string` (optional) - Passphrase for encrypted keys
+- **options** `object` (optional) - Configuration options
+  - **encrypt** `boolean` - Whether to encrypt the output private key
+  - **outputPassphrase** `string` - Passphrase for encrypting the output (required if encrypt is true)
 - **Returns** `Promise<PPKParseResult>` - Conversion result
 - **Throws** `PPKError` - On parsing errors
 
-#### `parseFromString(ppkContent, passphrase?)`
+#### `parseFromString(ppkContent, passphrase?, options?)`
 
 Convert PPK content from a string.
 
 - **ppkContent** `string` - PPK file content
 - **passphrase** `string` (optional) - Passphrase for encrypted keys
+- **options** `object` (optional) - Configuration options
+  - **encrypt** `boolean` - Whether to encrypt the output private key
+  - **outputPassphrase** `string` - Passphrase for encrypting the output (required if encrypt is true)
 - **Returns** `Promise<PPKParseResult>` - Conversion result
 - **Throws** `PPKError` - On parsing errors
+
+#### `convertPPKWithEncryption(ppkContent, inputPassphrase?, outputPassphrase)`
+
+Convert PPK content and encrypt the output with pure JavaScript (supports ALL key types including Ed25519).
+
+- **ppkContent** `string` - PPK file content
+- **inputPassphrase** `string` (optional) - Passphrase for encrypted PPK files
+- **outputPassphrase** `string` - Passphrase to encrypt the output key with
+- **Returns** `Promise<PPKParseResult>` - Conversion result with encrypted private key
+- **Throws** `Error` - On conversion or encryption errors
 
 ### Classes
 
@@ -542,25 +595,52 @@ interface PPKParseResult {
 
 ## 🔐 Supported Key Types
 
-| Algorithm | PPK v2 | PPK v3 | Encryption | Notes |
-|-----------|--------|--------|------------|-------|
-| RSA | ✅ | ✅ | ✅ | All key sizes |
-| DSA | ✅ | ✅ | ✅ | Standard DSA keys |
-| ECDSA P-256 | ✅ | ✅ | ✅ | secp256r1 |
-| ECDSA P-384 | ✅ | ✅ | ✅ | secp384r1 |
-| ECDSA P-521 | ✅ | ✅ | ✅ | secp521r1 |
-| Ed25519 | ✅ | ✅ | ✅ | Modern curve |
+| Algorithm | PPK v2 | PPK v3 | Input Decryption | Output Encryption | Notes |
+|-----------|--------|--------|------------------|-------------------|-------|
+| RSA | ✅ | ✅ | ✅ | ✅ (Pure JS) | All key sizes |
+| DSA | ✅ | ✅ | ✅ | ✅ (Pure JS) | Standard DSA keys |
+| ECDSA P-256 | ✅ | ✅ | ✅ | ✅ (Pure JS) | secp256r1 |
+| ECDSA P-384 | ✅ | ✅ | ✅ | ✅ (Pure JS) | secp384r1 |
+| ECDSA P-521 | ✅ | ✅ | ✅ | ✅ (Pure JS) | secp521r1 |
+| Ed25519 | ✅ | ✅ | ✅ | ✅ (Pure JS) | Pure JS encryption solution! |
+
+## 🔐 Pure JavaScript Encryption
+
+This library now supports **encrypting output keys with pure JavaScript** for ALL key types, including Ed25519!
+
+### Encryption Support Matrix
+
+| Key Type | Encryption Method | Output Format | Status |
+|----------|------------------|---------------|---------|
+| RSA | sshpk + Node.js crypto fallback | OpenSSH or PKCS#8 | ✅ Fully supported |
+| DSA | sshpk + Node.js crypto fallback | OpenSSH or PKCS#8 | ✅ Fully supported |
+| ECDSA | sshpk + Node.js crypto fallback | OpenSSH or PKCS#8 | ✅ Fully supported |
+| Ed25519 | sshpk (pure JS) | OpenSSH | ✅ **Now supported!** |
+
+### Key Benefits
+- **No external tools required** - 100% pure JavaScript solution
+- **Universal Ed25519 support** - Previously impossible with Node.js crypto alone
+- **Secure encryption** - Uses industry-standard AES-256-CBC and OpenSSH formats
+- **Backward compatible** - Existing code continues to work unchanged
+
+```javascript
+// NEW: Encrypt any key type including Ed25519
+const result = await parseFromString(ppkContent, inputPass, {
+  encrypt: true,
+  outputPassphrase: 'secure-password'
+});
+```
 
 ## 🔧 Output Formats
 
 This library supports two output formats for private keys:
 
-| Key Type | Default (PEM) Format | OpenSSH Format | Notes |
-|----------|---------------------|----------------|--------|
-| RSA | `-----BEGIN RSA PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
-| DSA | `-----BEGIN DSA PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
-| ECDSA | `-----BEGIN EC PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Both formats supported |
-| Ed25519 | `-----BEGIN OPENSSH PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | Always OpenSSH (standard) |
+| Key Type | Default (PEM) Format | OpenSSH Format | Encrypted Format |
+|----------|---------------------|----------------|------------------|
+| RSA | `-----BEGIN RSA PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | PKCS#8 or OpenSSH |
+| DSA | `-----BEGIN DSA PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | PKCS#8 or OpenSSH |
+| ECDSA | `-----BEGIN EC PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | PKCS#8 or OpenSSH |
+| Ed25519 | `-----BEGIN OPENSSH PRIVATE KEY-----` | `-----BEGIN OPENSSH PRIVATE KEY-----` | OpenSSH only |
 
 **Default Behavior (Backward Compatible):**
 - `parseFromFile()` and `parseFromString()` use PEM format by default
@@ -570,6 +650,10 @@ This library supports two output formats for private keys:
 - Use `new PPKParser({ outputFormat: 'openssh' })` for modern OpenSSH format
 - Better compatibility with ssh2, ssh2-sftp-client, and similar libraries
 - Contains proper `openssh-key-v1` structure
+
+**Encrypted Output:**
+- Use `encrypt: true` option for encrypted private keys
+- Works with all key types via pure JavaScript implementation
 
 ## 🚀 PPK v3 Features
 
@@ -594,22 +678,25 @@ This library is **comprehensively tested** with 200+ test cases covering:
 
 ### Edge Cases Tested
 - **PPK Versions**: Both genuine PPK v2 and v3 formats
-- **Encryption**: Unencrypted and AES-256-CBC encrypted variants
+- **Input Encryption**: Unencrypted and AES-256-CBC encrypted PPK variants
+- **Output Encryption**: Pure JS encryption testing for ALL key types including Ed25519
 - **Passphrases**: Simple, complex, special characters (`p@ssw0rd!#$%^&*()`), 100-character long, Unicode (`pásswōrd_ñeẅ_123`)
 - **Format Consistency**: Validation between PEM and OpenSSH outputs
 - **Error Handling**: Wrong passphrases, corrupted files, unsupported formats
+- **Encryption Validation**: encrypt flag testing, output passphrase requirements, decryption verification
 
 ### Test Suite Features
 - **PPK Parsing**: Algorithm detection, comment preservation, fingerprint generation
 - **Format Conversion**: Both PEM and OpenSSH output validation
 - **Version Detection**: Proper PPK v2 vs v3 handling
 - **Security**: MAC verification, passphrase handling, encryption/decryption
+- **Pure JS Encryption**: All 28 keys tested with encrypt flag, Ed25519 encryption validation
 - **Structure Validation**: Key encoding, Base64 validation, SSH format compliance
 
 Run the test suite:
 ```bash
-npm test                    # Basic test suite
-node test/comprehensive-test.js  # Full 200+ test comprehensive suite
+npm test                         # Complete test suite (19 tests including encryption)
+npm run test:coverage            # Test suite with coverage reporting
 ```
 
 ## 🛠️ Advanced Usage
@@ -685,7 +772,9 @@ async function timedConversion(filePath, passphrase) {
 ## 🏗️ Requirements
 
 - **Node.js**: 14.0.0 or higher  
-- **Dependencies**: Only hash-wasm for universal Argon2 support across all environments
+- **Dependencies**: 
+  - `hash-wasm` - Universal Argon2 support for PPK v3 compatibility
+  - `sshpk` - Pure JavaScript SSH key encryption (enables Ed25519 encryption)
 
 ## 🌍 Environments
 

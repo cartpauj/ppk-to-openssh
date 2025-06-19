@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 const assert = require('assert');
+const crypto = require('crypto');
+const sshpk = require('sshpk');
 const fs = require('fs');
 const path = require('path');
 const { parseFromString, parseFromFile, PPKParser, PPKError } = require('../src/index.js');
@@ -264,6 +266,264 @@ suite.addTest('PPK v3 MAC key derivation', () => {
   assert(!encryptedMacKey.equals(Buffer.alloc(32)), 'Should not be all zeros for encrypted');
 });
 
+// Function to convert PPK with encryption using pure JavaScript (sshpk + Node.js crypto)
+// Now supports ALL key types including Ed25519!
+async function convertPPKWithEncryption(ppkContent, inputPassphrase = '', outputPassphrase) {
+  try {
+    // Convert PPK to OpenSSH format (unencrypted)
+    const result = await parseFromString(ppkContent, inputPassphrase);
+    
+    // Try sshpk first (works with all key types including Ed25519)
+    try {
+      const key = sshpk.parsePrivateKey(result.privateKey, 'auto');
+      const encryptedPrivateKey = key.toString('openssh', { passphrase: outputPassphrase });
+      
+      return {
+        ...result,
+        privateKey: encryptedPrivateKey
+      };
+    } catch (sshpkError) {
+      // Fallback to Node.js crypto for PEM format keys
+      if (result.privateKey.includes('BEGIN OPENSSH PRIVATE KEY')) {
+        throw new Error(`sshpk encryption failed: ${sshpkError.message}`);
+      }
+      
+      const keyObject = crypto.createPrivateKey(result.privateKey);
+      const encryptedPrivateKey = keyObject.export({
+        format: 'pem',
+        type: 'pkcs8',
+        cipher: 'aes-256-cbc',
+        passphrase: outputPassphrase
+      });
+      
+      return {
+        ...result,
+        privateKey: encryptedPrivateKey
+      };
+    }
+  } catch (error) {
+    throw new Error(`Encryption failed: ${error.message}`);
+  }
+}
+
+// Test 13: Pure JS encryption - RSA keys
+suite.addTest('Pure JS encryption - RSA keys', async () => {
+  const testFiles = [
+    'test/fixtures/ppk-keys/rsa-2048-v2-nopass.ppk',
+    'test/fixtures/ppk-keys/rsa-2048-v3-nopass.ppk'
+  ];
+  
+  for (const filePath of testFiles) {
+    if (fs.existsSync(filePath)) {
+      const ppkContent = fs.readFileSync(filePath, 'utf8');
+      const originalResult = await parseFromString(ppkContent, '');
+      const encryptedResult = await convertPPKWithEncryption(ppkContent, '', 'test-password');
+      
+      // Encrypted key should be different from original
+      assert(encryptedResult.privateKey !== originalResult.privateKey, 'Encrypted key should differ from original');
+      
+      // Should be able to decrypt with appropriate tool
+      if (encryptedResult.privateKey.includes('BEGIN ENCRYPTED PRIVATE KEY')) {
+        // PKCS#8 format - use Node.js crypto
+        const decryptedKey = crypto.createPrivateKey({
+          key: encryptedResult.privateKey,
+          passphrase: 'test-password'
+        });
+        assert(decryptedKey, 'Should be able to decrypt PKCS#8 key');
+      } else {
+        // OpenSSH format - use sshpk
+        const decryptedKey = sshpk.parsePrivateKey(encryptedResult.privateKey, 'openssh', { passphrase: 'test-password' });
+        assert(decryptedKey, 'Should be able to decrypt OpenSSH key');
+      }
+    }
+  }
+});
+
+// Test 14: Pure JS encryption - DSA keys
+suite.addTest('Pure JS encryption - DSA keys', async () => {
+  const testFiles = [
+    'test/fixtures/ppk-keys/dsa-1024-v2-nopass.ppk',
+    'test/fixtures/ppk-keys/dsa-1024-v3-nopass.ppk'
+  ];
+  
+  for (const filePath of testFiles) {
+    if (fs.existsSync(filePath)) {
+      const ppkContent = fs.readFileSync(filePath, 'utf8');
+      const originalResult = await parseFromString(ppkContent, '');
+      const encryptedResult = await convertPPKWithEncryption(ppkContent, '', 'test-password');
+      
+      // Encrypted key should be different from original
+      assert(encryptedResult.privateKey !== originalResult.privateKey, 'Encrypted key should differ from original');
+      
+      // Should be able to decrypt with appropriate tool
+      if (encryptedResult.privateKey.includes('BEGIN ENCRYPTED PRIVATE KEY')) {
+        // PKCS#8 format - use Node.js crypto
+        const decryptedKey = crypto.createPrivateKey({
+          key: encryptedResult.privateKey,
+          passphrase: 'test-password'
+        });
+        assert(decryptedKey, 'Should be able to decrypt PKCS#8 key');
+      } else {
+        // OpenSSH format - use sshpk
+        const decryptedKey = sshpk.parsePrivateKey(encryptedResult.privateKey, 'openssh', { passphrase: 'test-password' });
+        assert(decryptedKey, 'Should be able to decrypt OpenSSH key');
+      }
+    }
+  }
+});
+
+// Test 15: Pure JS encryption - ECDSA keys
+suite.addTest('Pure JS encryption - ECDSA keys', async () => {
+  const testFiles = [
+    'test/fixtures/ppk-keys/ecdsa-256-v2-nopass.ppk',
+    'test/fixtures/ppk-keys/ecdsa-384-v3-nopass.ppk',
+    'test/fixtures/ppk-keys/ecdsa-521-v2-nopass.ppk'
+  ];
+  
+  for (const filePath of testFiles) {
+    if (fs.existsSync(filePath)) {
+      const ppkContent = fs.readFileSync(filePath, 'utf8');
+      const originalResult = await parseFromString(ppkContent, '');
+      const encryptedResult = await convertPPKWithEncryption(ppkContent, '', 'test-password');
+      
+      // Encrypted key should be different from original
+      assert(encryptedResult.privateKey !== originalResult.privateKey, 'Encrypted key should differ from original');
+      
+      // Should be able to decrypt with appropriate tool
+      if (encryptedResult.privateKey.includes('BEGIN ENCRYPTED PRIVATE KEY')) {
+        // PKCS#8 format - use Node.js crypto
+        const decryptedKey = crypto.createPrivateKey({
+          key: encryptedResult.privateKey,
+          passphrase: 'test-password'
+        });
+        assert(decryptedKey, 'Should be able to decrypt PKCS#8 key');
+      } else {
+        // OpenSSH format - use sshpk
+        const decryptedKey = sshpk.parsePrivateKey(encryptedResult.privateKey, 'openssh', { passphrase: 'test-password' });
+        assert(decryptedKey, 'Should be able to decrypt OpenSSH key');
+      }
+    }
+  }
+});
+
+// Test 16: Pure JS encryption - Ed25519 keys (now working with sshpk!)
+suite.addTest('Pure JS encryption - Ed25519 keys', async () => {
+  const testFiles = [
+    'test/fixtures/ppk-keys/ed25519-v2-nopass.ppk',
+    'test/fixtures/ppk-keys/ed25519-v3-nopass.ppk'
+  ];
+  
+  for (const filePath of testFiles) {
+    if (fs.existsSync(filePath)) {
+      const ppkContent = fs.readFileSync(filePath, 'utf8');
+      const result = await convertPPKWithEncryption(ppkContent, '', 'test-password');
+      
+      assert(result.privateKey.includes('BEGIN OPENSSH PRIVATE KEY'), 'Should be OpenSSH format');
+      assert(result.privateKey !== ppkContent, 'Should be different from original (encrypted)');
+      
+      // Verify we can decrypt it back with sshpk
+      const decryptedKey = sshpk.parsePrivateKey(result.privateKey, 'openssh', { passphrase: 'test-password' });
+      assert(decryptedKey, 'Should be able to decrypt the key');
+      assert.strictEqual(decryptedKey.type, 'ed25519', 'Should be Ed25519 key type');
+    }
+  }
+});
+
+// Test 17: Comprehensive encryption test - encrypt flag with main API
+suite.addTest('Comprehensive encryption test - encrypt flag with main API', async () => {
+  const manifest = JSON.parse(fs.readFileSync('test/fixtures/test-keys-manifest.json', 'utf8'));
+  
+  let totalTested = 0;
+  let totalSuccessful = 0;
+  
+  for (const keyInfo of manifest.keys) {
+    const ppkContent = fs.readFileSync(keyInfo.files.ppk, 'utf8');
+    const passphrase = keyInfo.passphrase;
+    
+    // Test 1: Parse without encryption (should be unencrypted)
+    const unencryptedResult = await parseFromString(ppkContent, passphrase);
+    
+    // Test 2: Parse with encrypt flag (should be encrypted)
+    const encryptedResult = await parseFromString(ppkContent, passphrase, {
+      encrypt: true,
+      outputPassphrase: 'test-encrypt-pass'
+    });
+    
+    // Verify encryption worked (key should be different)
+    assert(encryptedResult.privateKey !== unencryptedResult.privateKey, 
+           `Encryption failed for ${keyInfo.name}: key unchanged`);
+    
+    // Verify public keys are identical
+    assert.strictEqual(encryptedResult.publicKey, unencryptedResult.publicKey,
+                      `Public keys should be identical for ${keyInfo.name}`);
+    
+    // Verify encrypted key can be decrypted
+    if (encryptedResult.privateKey.includes('BEGIN ENCRYPTED PRIVATE KEY')) {
+      // PKCS#8 format - use Node.js crypto
+      const decryptedKey = crypto.createPrivateKey({
+        key: encryptedResult.privateKey,
+        passphrase: 'test-encrypt-pass'
+      });
+      assert(decryptedKey, `PKCS#8 decryption failed for ${keyInfo.name}`);
+    } else {
+      // OpenSSH format - use sshpk
+      const decryptedKey = sshpk.parsePrivateKey(encryptedResult.privateKey, 'openssh', { 
+        passphrase: 'test-encrypt-pass' 
+      });
+      assert(decryptedKey, `OpenSSH decryption failed for ${keyInfo.name}`);
+    }
+    
+    totalTested++;
+    totalSuccessful++;
+  }
+  
+  assert.strictEqual(totalSuccessful, totalTested, `Expected all ${totalTested} keys to encrypt successfully`);
+  assert.strictEqual(totalTested, manifest.keys.length, 'Should test all keys in manifest');
+});
+
+// Test 18: Encrypt flag validation
+suite.addTest('Encrypt flag validation', async () => {
+  const ppkContent = fs.readFileSync('test/fixtures/ppk-keys/rsa-2048-v2-nopass.ppk', 'utf8');
+  
+  // Test error when encrypt is true but no outputPassphrase
+  try {
+    await parseFromString(ppkContent, '', { encrypt: true });
+    assert.fail('Should throw error when encrypt is true but outputPassphrase is missing');
+  } catch (error) {
+    assert(error.message.includes('outputPassphrase is required'), 'Should require outputPassphrase');
+  }
+  
+  // Test that encrypt: false works (same as no options)
+  const result1 = await parseFromString(ppkContent, '');
+  const result2 = await parseFromString(ppkContent, '', { encrypt: false });
+  assert.strictEqual(result1.privateKey, result2.privateKey, 'encrypt: false should work like no options');
+});
+
+// Test 19: parseFromFile with encrypt flag
+suite.addTest('parseFromFile with encrypt flag', async () => {
+  const filePath = 'test/fixtures/ppk-keys/ed25519-v2-nopass.ppk';
+  
+  // Test without encryption
+  const unencryptedResult = await parseFromFile(filePath, '');
+  
+  // Test with encryption
+  const encryptedResult = await parseFromFile(filePath, '', {
+    encrypt: true,
+    outputPassphrase: 'test-file-encrypt'
+  });
+  
+  // Verify they're different
+  assert(encryptedResult.privateKey !== unencryptedResult.privateKey, 'File encryption should work');
+  assert.strictEqual(encryptedResult.publicKey, unencryptedResult.publicKey, 'Public keys should match');
+  
+  // Verify encrypted key works
+  const decryptedKey = sshpk.parsePrivateKey(encryptedResult.privateKey, 'openssh', { 
+    passphrase: 'test-file-encrypt' 
+  });
+  assert(decryptedKey, 'Should be able to decrypt file-encrypted key');
+  assert.strictEqual(decryptedKey.type, 'ed25519', 'Should be Ed25519 key');
+});
+
 // Run the test suite
 if (require.main === module) {
   suite.run().catch(error => {
@@ -272,4 +532,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { TestSuite, sampleRSAPPK };
+module.exports = { TestSuite, sampleRSAPPK, convertPPKWithEncryption };

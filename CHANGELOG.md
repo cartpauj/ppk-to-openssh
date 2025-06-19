@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-06-19
+
+### Added
+- **Pure JavaScript Encryption**: Encrypt output keys with pure JS for ALL key types including Ed25519
+- **Encrypt Flag Support**: Added `encrypt` option to `parseFromString()` and `parseFromFile()` functions
+- **Universal Ed25519 Encryption**: Previously impossible Ed25519 encryption now supported via sshpk library
+- **convertPPKWithEncryption()**: New dedicated function for PPK conversion with encryption
+- **Comprehensive Encryption Testing**: All 28 test keys validated with encrypt flag functionality
+- **OpenSSH Format Encryption**: Ed25519 and other keys encrypted in industry-standard OpenSSH format
+- **PKCS#8 Fallback**: RSA/DSA/ECDSA keys support both OpenSSH and PKCS#8 encrypted formats
+
+### Enhanced
+- **API Functions**: `parseFromString()` and `parseFromFile()` now accept options parameter with encrypt flag
+- **Error Validation**: Proper validation that `outputPassphrase` is required when `encrypt: true`
+- **Decryption Testing**: All encrypted outputs verified to decrypt correctly with proper passphrases
+- **Documentation**: Complete README update with encryption examples and API reference
+- **Dependencies**: Added sshpk for universal SSH key encryption support
+
+### Technical
+- **sshpk Integration**: Pure JavaScript SSH key encryption library for Ed25519 support
+- **Hybrid Approach**: sshpk primary with Node.js crypto fallback for maximum compatibility
+- **Test Coverage**: 19 total tests including comprehensive encrypt flag validation
+- **Backward Compatibility**: All existing code continues to work unchanged
+
 ## [2.0.0] - 2025-06-19
 
 ### Added

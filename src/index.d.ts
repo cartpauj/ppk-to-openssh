@@ -95,19 +95,37 @@ export declare class PPKParser {
  * Parse a PPK file from string content and convert to OpenSSH format
  * @param ppkContent - The PPK file content as string
  * @param passphrase - Optional passphrase for encrypted keys
+ * @param options - Optional configuration object
  * @returns Promise resolving to parsed key data
  * @throws PPKError - When parsing fails
  */
-export declare function parseFromString(ppkContent: string, passphrase?: string): Promise<PPKParseResult>;
+export declare function parseFromString(ppkContent: string, passphrase?: string, options?: {
+  encrypt?: boolean;
+  outputPassphrase?: string;
+}): Promise<PPKParseResult>;
 
 /**
  * Parse a PPK file from filesystem path and convert to OpenSSH format
  * @param filePath - Path to the PPK file
  * @param passphrase - Optional passphrase for encrypted keys
+ * @param options - Optional configuration object
  * @returns Promise resolving to parsed key data
  * @throws PPKError - When parsing fails or file not found
  */
-export declare function parseFromFile(filePath: string, passphrase?: string): Promise<PPKParseResult>;
+export declare function parseFromFile(filePath: string, passphrase?: string, options?: {
+  encrypt?: boolean;
+  outputPassphrase?: string;
+}): Promise<PPKParseResult>;
+
+/**
+ * Convert PPK with encryption using pure JavaScript (supports ALL key types including Ed25519)
+ * @param ppkContent - The PPK file content as string
+ * @param inputPassphrase - Optional passphrase for encrypted PPK files
+ * @param outputPassphrase - Passphrase to encrypt the output key with
+ * @returns Promise resolving to encrypted key data
+ * @throws Error - When conversion or encryption fails
+ */
+export declare function convertPPKWithEncryption(ppkContent: string, inputPassphrase?: string, outputPassphrase?: string): Promise<PPKParseResult>;
 
 /**
  * Convert PPK content to OpenSSH format (alias for parseFromString)
@@ -119,6 +137,7 @@ export declare function convert(ppkContent: string, passphrase?: string): Promis
 declare const _default: {
   parseFromString: typeof parseFromString;
   parseFromFile: typeof parseFromFile;
+  convertPPKWithEncryption: typeof convertPPKWithEncryption;
   convert: typeof convert;
   PPKParser: typeof PPKParser;
   PPKError: typeof PPKError;
