@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2025-06-19
+
+### Fixed
+- **Documentation**: Corrected API documentation in README.md for PPKParser class usage
+- **API Reference**: Fixed PPKParser.parse() method signature to show correct 2-parameter usage
+- **Constructor Options**: Added missing outputPassphrase option documentation for PPKParser constructor
+- **API Clarity**: Added clear distinction between wrapper functions and PPKParser class APIs
+
+### Enhanced
+- **Examples**: Updated all PPKParser code examples to show correct parameter usage
+- **Developer Experience**: Added warning section explaining API differences to prevent confusion
+
 ## [3.1.0] - 2025-06-19
 
 ### Fixed

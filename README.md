@@ -207,13 +207,14 @@ async function convertMultipleKeys(directory, passphrase = '') {
 const { PPKParser } = require('ppk-to-openssh');
 
 async function advancedUsage() {
+  // Basic parser without encryption
   const parser = new PPKParser({
     maxFileSize: 2 * 1024 * 1024, // 2MB limit
     maxFieldSize: 1024 * 1024     // 1MB field limit
   });
   
   const ppkContent = fs.readFileSync('./mykey.ppk', 'utf8');
-  const result = await parser.parse(ppkContent, 'passphrase');
+  const result = await parser.parse(ppkContent, 'passphrase'); // Only 2 parameters!
   
   console.log('Algorithm:', result.algorithm);
   if (result.curve) {
@@ -222,6 +223,20 @@ async function advancedUsage() {
   
   // Access parser info
   console.log('Supported algorithms:', parser.supportedAlgorithms);
+}
+
+// Example with output encryption - outputPassphrase goes in constructor
+async function encryptedOutput() {
+  const parser = new PPKParser({
+    outputFormat: 'openssh',
+    outputPassphrase: 'new-secure-password'  // Goes in constructor, not parse()
+  });
+  
+  const ppkContent = fs.readFileSync('./mykey.ppk', 'utf8');
+  const result = await parser.parse(ppkContent, 'input-passphrase'); // Still only 2 parameters!
+  
+  // Private key is now encrypted with 'new-secure-password'
+  console.log('Encrypted private key:', result.privateKey.split('\n')[0]);
 }
 ```
 
@@ -237,7 +252,7 @@ async function openSSHFormatExample() {
   });
   
   const ppkContent = fs.readFileSync('./mykey.ppk', 'utf8');
-  const result = await parser.parse(ppkContent, 'passphrase');
+  const result = await parser.parse(ppkContent, 'passphrase'); // Only 2 parameters
   
   // Private key will be in OpenSSH format for ssh2-streams compatibility
   console.log('Private Key Format:', result.privateKey.split('\n')[0]);
@@ -253,6 +268,20 @@ async function openSSHFormatExample() {
     privateKey: result.privateKey,  // OpenSSH format works perfectly
     passphrase: 'key-passphrase'    // If the converted key is encrypted
   });
+}
+
+// Example with encrypted output using PPKParser directly
+async function encryptedOpenSSHOutput() {
+  const parser = new PPKParser({
+    outputFormat: 'openssh',
+    outputPassphrase: 'secure-output-password'  // Encryption options go in constructor
+  });
+  
+  const ppkContent = fs.readFileSync('./mykey.ppk', 'utf8');
+  const result = await parser.parse(ppkContent, 'input-passphrase'); // Only 2 parameters
+  
+  // Private key is encrypted with 'secure-output-password'
+  console.log('Encrypted OpenSSH key:', result.privateKey.split('\n')[0]);
 }
 
 // Backward compatibility: Default behavior unchanged
@@ -480,6 +509,36 @@ async function convertAndUseSSH(ppkPath, host, command) {
 
 ## 📖 API Reference
 
+### ⚠️ Important API Notes
+
+This library provides **two different APIs** with different parameter signatures:
+
+#### 1. Wrapper Functions (Recommended)
+```javascript
+// These support options as 3rd parameter:
+parseFromString(ppkContent, passphrase, options)
+parseFromFile(filePath, passphrase, options)
+
+// Example with encryption:
+const result = await parseFromString(ppkContent, 'input-pass', {
+  encrypt: true,
+  outputPassphrase: 'output-pass'
+});
+```
+
+#### 2. PPKParser Class (Advanced)
+```javascript  
+// Constructor takes all options, parse() only takes 2 parameters:
+const parser = new PPKParser({
+  outputFormat: 'openssh',
+  outputPassphrase: 'output-pass'  // Goes in constructor!
+});
+
+const result = await parser.parse(ppkContent, 'input-pass'); // Only 2 params!
+```
+
+**Key Difference:** Wrapper functions accept options in the function call, while PPKParser takes options in the constructor.
+
 ### Functions
 
 #### `parseFromFile(filePath, passphrase?, options?)`
@@ -534,13 +593,14 @@ parser.supportedAlgorithms  // Array of supported key algorithms
 parser.maxFileSize         // Current max file size setting
 
 // Methods
-await parser.parse(ppkContent, passphrase)  // Parse PPK content
+await parser.parse(ppkContent, passphrase)  // Parse PPK content (2 parameters only!)
 ```
 
 **Constructor Options:**
 - `maxFileSize` (number): Maximum PPK file size in bytes (default: 1MB)
-- `maxFieldSize` (number): Maximum individual field size in bytes (default: 1MB)
+- `maxFieldSize` (number): Maximum individual field size in bytes (default: 1MB)  
 - `outputFormat` (string): Private key output format - `'pem'` or `'openssh'` (default: `'pem'`)
+- `outputPassphrase` (string): Passphrase to encrypt the output private key (when provided, automatically encrypts output)
 
 #### `PPKError`
 
