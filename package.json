@@ -1,6 +1,6 @@
 {
   "name": "ppk-to-openssh",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A pure JavaScript library for parsing and converting PuTTY private key files (.ppk) to OpenSSH format. Supports all PPK versions (v2 and v3) and key types (RSA, DSA, ECDSA, Ed25519). Handles both encrypted and unencrypted keys with full MAC verification.",
   "main": "lib/index.js",
   "module": "lib/index.mjs",
@@ -27,7 +27,7 @@
     "build:cjs": "mkdir -p lib && cp src/index.js lib/index.js && cp src/ppk-parser.js lib/ppk-parser.js",
     "build:esm": "node scripts/build-esm.js",
     "build:types": "cp src/index.d.ts lib/index.d.ts",
-    "test": "node test/test.js",
+    "test": "node test/comprehensive-test.js",
     "test:coverage": "c8 npm test",
     "lint": "eslint src/ test/ bin/",
     "prepublishOnly": "npm run build && npm test",

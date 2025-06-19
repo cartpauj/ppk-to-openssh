@@ -8,7 +8,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { parseFromFile, PPKParser, PPKError } = require('../src/index.js');
+const { parseFromFile, parseFromString, PPKParser, PPKError } = require('../src/index.js');
 
 class ComprehensiveTestSuite {
   constructor() {
@@ -251,6 +251,132 @@ class ComprehensiveTestSuite {
       assert(resultWithPass, 'Should parse unencrypted key even with passphrase provided');
     }
   }
+
+  // Helper to test output encryption functionality
+  async testOutputEncryption(keyInfo) {
+    const ppkContent = fs.readFileSync(keyInfo.files.ppk, 'utf8');
+    const outputPassphrase = 'test_encryption_pass_123';
+    
+    // Test encryption option
+    const encryptedResult = await parseFromString(ppkContent, keyInfo.passphrase, {
+      encrypt: true,
+      outputPassphrase: outputPassphrase
+    });
+    
+    assert(encryptedResult, 'Should return result when encrypting');
+    assert(encryptedResult.privateKey, 'Should have encrypted private key');
+    assert(encryptedResult.publicKey, 'Should have public key');
+    
+    // CRITICAL: Test that the output is actually encrypted
+    assert(encryptedResult.privateKey.includes('BEGIN OPENSSH PRIVATE KEY'), 
+      'Encrypted output should be in OpenSSH format');
+    
+    // Parse the OpenSSH key structure to verify encryption
+    const base64Data = encryptedResult.privateKey
+      .replace(/-----BEGIN OPENSSH PRIVATE KEY-----/, '')
+      .replace(/-----END OPENSSH PRIVATE KEY-----/, '')
+      .replace(/\s+/g, '');
+    const binaryData = Buffer.from(base64Data, 'base64');
+    
+    // Parse the OpenSSH key structure
+    let offset = 15; // Skip 'openssh-key-v1\0'
+    
+    // Read cipher name
+    const cipherLen = binaryData.readUInt32BE(offset);
+    offset += 4;
+    const cipher = binaryData.toString('utf8', offset, offset + cipherLen);
+    offset += cipherLen;
+    
+    // Read KDF name
+    const kdfLen = binaryData.readUInt32BE(offset);
+    offset += 4;
+    const kdf = binaryData.toString('utf8', offset, offset + kdfLen);
+    
+    // CRITICAL ASSERTIONS: These would have caught the original bug!
+    assert.notStrictEqual(cipher, 'none', 
+      `Expected encrypted cipher, but got: "${cipher}". This indicates the key is NOT encrypted!`);
+    assert.notStrictEqual(kdf, 'none', 
+      `Expected encrypted KDF, but got: "${kdf}". This indicates the key is NOT encrypted!`);
+    
+    // Verify expected encryption algorithm
+    assert.strictEqual(cipher, 'aes256-ctr', 
+      `Expected aes256-ctr cipher, got: "${cipher}"`);
+    assert.strictEqual(kdf, 'bcrypt', 
+      `Expected bcrypt KDF, got: "${kdf}"`);
+    
+    return encryptedResult;
+  }
+
+  // Helper to test unencrypted output (default behavior)
+  async testUnencryptedOutput(keyInfo) {
+    const ppkContent = fs.readFileSync(keyInfo.files.ppk, 'utf8');
+    
+    // Test default behavior (no encryption)
+    const unencryptedResult = await parseFromString(ppkContent, keyInfo.passphrase);
+    
+    assert(unencryptedResult, 'Should return result for unencrypted output');
+    assert(unencryptedResult.privateKey, 'Should have private key');
+    
+    // If it's in OpenSSH format, verify it's unencrypted
+    if (unencryptedResult.privateKey.includes('BEGIN OPENSSH PRIVATE KEY')) {
+      const base64Data = unencryptedResult.privateKey
+        .replace(/-----BEGIN OPENSSH PRIVATE KEY-----/, '')
+        .replace(/-----END OPENSSH PRIVATE KEY-----/, '')
+        .replace(/\s+/g, '');
+      const binaryData = Buffer.from(base64Data, 'base64');
+      
+      // Parse the OpenSSH key structure
+      let offset = 15; // Skip 'openssh-key-v1\0'
+      
+      // Read cipher name
+      const cipherLen = binaryData.readUInt32BE(offset);
+      offset += 4;
+      const cipher = binaryData.toString('utf8', offset, offset + cipherLen);
+      offset += cipherLen;
+      
+      // Read KDF name
+      const kdfLen = binaryData.readUInt32BE(offset);
+      offset += 4;
+      const kdf = binaryData.toString('utf8', offset, offset + kdfLen);
+      
+      // For unencrypted output, these should be 'none'
+      assert.strictEqual(cipher, 'none', 
+        `Expected unencrypted cipher 'none', got: "${cipher}"`);
+      assert.strictEqual(kdf, 'none', 
+        `Expected unencrypted KDF 'none', got: "${kdf}"`);
+    }
+    
+    return unencryptedResult;
+  }
+
+  // Helper to test encryption error handling
+  async testEncryptionErrorHandling(keyInfo) {
+    const ppkContent = fs.readFileSync(keyInfo.files.ppk, 'utf8');
+    
+    // Test missing outputPassphrase
+    try {
+      await parseFromString(ppkContent, keyInfo.passphrase, {
+        encrypt: true
+        // Missing outputPassphrase
+      });
+      assert.fail('Should fail when encrypt=true but outputPassphrase is missing');
+    } catch (error) {
+      assert(error.message.includes('outputPassphrase'), 
+        'Error should mention missing outputPassphrase');
+    }
+    
+    // Test empty outputPassphrase
+    try {
+      await parseFromString(ppkContent, keyInfo.passphrase, {
+        encrypt: true,
+        outputPassphrase: ''
+      });
+      assert.fail('Should fail when outputPassphrase is empty');
+    } catch (error) {
+      assert(error.message.includes('outputPassphrase'), 
+        'Error should mention outputPassphrase issue');
+    }
+  }
 }
 
 // Create and run comprehensive test suite
@@ -293,6 +419,21 @@ async function main() {
     // Test key structure validation
     suite.addTest(`Key Structure: ${keyInfo.name}`, async () => {
       await suite.testKeyStructureValidation(keyInfo);
+    });
+
+    // Test output encryption functionality - THE CRITICAL MISSING TESTS!
+    suite.addTest(`Output Encryption: ${keyInfo.name}`, async () => {
+      await suite.testOutputEncryption(keyInfo);
+    });
+
+    // Test unencrypted output (default behavior)
+    suite.addTest(`Unencrypted Output: ${keyInfo.name}`, async () => {
+      await suite.testUnencryptedOutput(keyInfo);
+    });
+
+    // Test encryption error handling
+    suite.addTest(`Encryption Error Handling: ${keyInfo.name}`, async () => {
+      await suite.testEncryptionErrorHandling(keyInfo);
     });
   }
 

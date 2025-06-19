@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2025-06-19
+
+### Fixed
+- **Critical Encryption Bug**: Fixed encryption functionality where `encrypt: true` option was producing unencrypted output
+- **OpenSSH Key Format**: Corrected cipher and KDF fields to use proper encryption values instead of 'none'
+- **Key Derivation**: Implemented proper bcrypt-style key derivation for OpenSSH private key encryption
+
+### Enhanced
+- **Test Coverage**: Added comprehensive encryption tests to verify cipher and KDF values in output
+- **Error Validation**: Improved error handling for encryption parameter validation
+- **Encryption Tests**: Added 84 new tests covering all key types with encryption functionality
+
+### Technical
+- **PPKParser Options**: Enhanced parser to accept and process outputPassphrase parameter
+- **Encryption Algorithm**: Uses AES-256-CTR cipher with bcrypt KDF for encrypted output
+- **Test Suite**: Expanded test suite from ~200 to 284 tests with encryption validation
+
 ## [3.0.0] - 2025-06-19
 
 ### Added

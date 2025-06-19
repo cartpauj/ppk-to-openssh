@@ -58,16 +58,22 @@ async function convertPPKWithEncryption(ppkContent, inputPassphrase = '', output
  * @returns {Promise<Object>} Object containing publicKey and privateKey in OpenSSH format
  */
 async function parseFromString(ppkContent, passphrase = '', options = {}) {
-  const parser = new PPKParser();
+  // Pass options to PPKParser so it can handle encryption directly
+  const parserOptions = {
+    outputFormat: 'openssh', // Use openssh format when encryption is requested
+    outputPassphrase: options.encrypt ? options.outputPassphrase : null
+  };
+  
+  const parser = new PPKParser(parserOptions);
   const result = await parser.parse(ppkContent, passphrase);
   
-  // If encrypt option is specified, encrypt the private key
-  if (options.encrypt) {
+  // If encrypt option is specified but parser doesn't support direct encryption, fall back
+  if (options.encrypt && !result.privateKey.includes('BEGIN OPENSSH PRIVATE KEY')) {
     if (!options.outputPassphrase) {
       throw new Error('outputPassphrase is required when encrypt option is true');
     }
     
-    // Use our encryption function
+    // Use our encryption function as fallback
     const encryptedResult = await convertPPKWithEncryption(ppkContent, passphrase, options.outputPassphrase);
     return encryptedResult;
   }
