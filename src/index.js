@@ -1,6 +1,6 @@
-const { PPKParser, PPKError } = require('./ppk-parser');
-const crypto = require('crypto');
-const sshpk = require('sshpk');
+import { PPKParser, PPKError } from './ppk-parser.js';
+import crypto from 'crypto';
+import sshpk from 'sshpk';
 
 /**
  * Convert PPK with encryption using pure JavaScript (supports ALL key types including Ed25519)
@@ -91,7 +91,7 @@ async function parseFromString(ppkContent, passphrase = '', options = {}) {
  * @returns {Promise<Object>} Object containing publicKey and privateKey in OpenSSH format
  */
 async function parseFromFile(filePath, passphrase = '', options = {}) {
-  const fs = require('fs');
+  const { promises: fs } = await import('fs');
   
   try {
     const ppkContent = await fs.promises.readFile(filePath, 'utf8');
@@ -116,7 +116,7 @@ const convert = parseFromString;
 
 
 // Export main functions and classes
-module.exports = {
+export {
   parseFromString,
   parseFromFile,
   convertPPKWithEncryption,
@@ -125,5 +125,12 @@ module.exports = {
   PPKError
 };
 
-// Default export for CommonJS
-module.exports.default = module.exports;
+// Default export
+export default {
+  parseFromString,
+  parseFromFile,
+  convertPPKWithEncryption,
+  convert,
+  PPKParser,
+  PPKError
+};

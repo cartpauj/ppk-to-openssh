@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2025-06-20
+
+### Added
+- **ES Modules Support**: Complete conversion to ES6 imports/exports for optimal webpack bundling
+- **Tree Shaking**: Source code now uses import-only syntax enabling better dead code elimination
+- **Build System**: Enhanced build process that generates both CommonJS and ES module outputs
+- **Webpack Optimization**: Improved static analysis and smaller bundle sizes for modern bundlers
+
+### Enhanced  
+- **Developer Experience**: Better import/export structure for modern development workflows
+- **Bundle Performance**: Optimized for webpack and other ES module-aware bundlers
+- **Backward Compatibility**: Maintains full CommonJS compatibility through dual exports
+
+### Technical
+- **Source Migration**: Converted all source files from CommonJS to ES modules
+- **Build Scripts**: Added automated CommonJS generation from ES module sources
+- **Code Quality**: Added ESLint configuration for ES module standards
+- **Testing**: Updated test infrastructure to work with new module system
+
 ## [3.1.1] - 2025-06-19
 
 ### Fixed

@@ -1,5 +1,5 @@
-const crypto = require('crypto');
-const { argon2id, argon2i, argon2d } = require('hash-wasm');
+import crypto from 'crypto';
+import { argon2id, argon2i, argon2d } from 'hash-wasm';
 
 /**
  * Universal Argon2 implementation using hash-wasm
@@ -223,8 +223,8 @@ class PPKParser {
       // Add ssh2-streams compatibility method only for RSA keys that need it
       if (ppkData.algorithm === 'ssh-rsa' || result.privateKey.includes('BEGIN RSA PRIVATE KEY')) {
         try {
-          result.getCompatiblePrivateKey = (signatureAlgorithm = 'sha512') => {
-            return this.createSSH2StreamsCompatibleKey(result.privateKey, signatureAlgorithm);
+          result.getCompatiblePrivateKey = async (signatureAlgorithm = 'sha512') => {
+            return await this.createSSH2StreamsCompatibleKey(result.privateKey, signatureAlgorithm);
           };
         } catch (error) {
           // If ssh2-streams is not available, just skip the compatibility method
@@ -723,7 +723,7 @@ class PPKParser {
   convertEd25519ToOpenSSH(publicKeyData, privateKeyData, comment) {
     // Parse the public key
     const reader = new BinaryReader(publicKeyData);
-    const keyType = reader.readString();
+    const _keyType = reader.readString();
     const publicKey = reader.readBuffer();
 
     // For Ed25519, the private key in PPK contains only the private key (32 bytes)
@@ -793,7 +793,7 @@ class PPKParser {
     
     // Extract public key components (skip the key type prefix)
     const pubReader = new BinaryReader(publicKeyData);
-    const pubKeyType = pubReader.readString();
+    const _pubKeyType = pubReader.readString();
     let publicKeyComponents;
     
     if (keyType === 'ssh-ed25519') {
@@ -1118,18 +1118,18 @@ class PPKParser {
    * This method generates a private key that ssh2-streams can parse and then
    * modifies its signature algorithm for compatibility with modern SSH servers
    */
-  createSSH2StreamsCompatibleKey(privateKey, signatureAlgorithm = 'sha256') {
+  async createSSH2StreamsCompatibleKey(privateKey, signatureAlgorithm = 'sha256') {
     try {
       // Only apply this enhancement for RSA keys that need signature algorithm upgrades
       // Check if this is an RSA key by looking at the key header
       if (!privateKey.includes('BEGIN RSA PRIVATE KEY') && !privateKey.includes('ssh-rsa')) {
         // For non-RSA keys, just parse normally since they don't need signature algorithm fixes
-        const ssh2Streams = require('ssh2-streams');
+        const { default: ssh2Streams } = await import('ssh2-streams');
         return ssh2Streams.utils.parseKey(privateKey);
       }
       
       // For RSA keys, we need to override the signature algorithm
-      const ssh2Streams = require('ssh2-streams');
+      const { default: ssh2Streams } = await import('ssh2-streams');
       
       // Parse the RSA key with ssh2-streams
       const parsedKey = ssh2Streams.utils.parseKey(privateKey);
@@ -1156,7 +1156,7 @@ class PPKParser {
       return parsedKey;
       
     } catch (error) {
-      if (error.code === 'MODULE_NOT_FOUND' && error.message.includes('ssh2-streams')) {
+      if (error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('ssh2-streams')) {
         throw new Error('ssh2-streams module not available - compatibility method not supported');
       }
       throw new Error(`Failed to create ssh2-streams compatible key: ${error.message}`);
@@ -1280,6 +1280,5 @@ class BinaryReader {
 }
 
 // Export the parser and error class
-module.exports = PPKParser;
-module.exports.PPKParser = PPKParser;
-module.exports.PPKError = PPKError;
+export default PPKParser;
+export { PPKParser, PPKError };

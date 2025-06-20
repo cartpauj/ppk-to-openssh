@@ -12,6 +12,7 @@ A pure JavaScript library for parsing and converting PuTTY private key files (.p
 - **Pure JavaScript Encryption**: Encrypt output keys with pure JS for ALL key types (including Ed25519)
 - **Dual Output Formats**: Legacy PEM format (default) and modern OpenSSH format with full DSA support
 - **Production-Ready PPK v3**: Full Argon2id/Argon2i/Argon2d support with HMAC-SHA-256 verification
+- **ES Modules Optimized**: Full ES6 import/export support for optimal webpack bundling and tree shaking
 - **Universal Argon2**: WebAssembly-based implementation works in browsers and Node.js
 - **Security**: Full MAC verification, input validation, and cryptographic best practices
 - **Minimal Dependencies**: Only sshpk and hash-wasm for universal compatibility

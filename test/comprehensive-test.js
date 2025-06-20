@@ -8,7 +8,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { parseFromFile, parseFromString, PPKParser, PPKError } = require('../src/index.js');
+const { parseFromFile, parseFromString, PPKParser, PPKError } = require('../lib/index.js');
 
 class ComprehensiveTestSuite {
   constructor() {
@@ -58,7 +58,6 @@ class ComprehensiveTestSuite {
 
   // Helper to test PPK parsing for a specific key
   async testPPKParsing(keyInfo) {
-    const parser = new PPKParser();
     const result = await parseFromFile(keyInfo.files.ppk, keyInfo.passphrase);
     
     // Verify basic structure
@@ -86,7 +85,6 @@ class ComprehensiveTestSuite {
 
   // Helper to test PEM format conversion
   async testPEMConversion(keyInfo) {
-    const parser = new PPKParser({ outputFormat: 'pem' });
     const result = await parseFromFile(keyInfo.files.ppk, keyInfo.passphrase);
     
     // Only RSA and DSA keys should support PEM format
@@ -205,7 +203,6 @@ class ComprehensiveTestSuite {
 
   // Helper to test PPK version detection
   async testVersionDetection(keyInfo) {
-    const parser = new PPKParser();
     const ppkContent = fs.readFileSync(keyInfo.files.ppk, 'utf8');
     
     // Check that version is correctly detected
