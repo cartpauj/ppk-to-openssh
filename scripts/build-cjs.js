@@ -21,9 +21,9 @@ function convertToCommonJS(content) {
     // Fix error code for CommonJS
     .replace(/error\.code === 'ERR_MODULE_NOT_FOUND'/g, "error.code === 'MODULE_NOT_FOUND'");
 
-  // Handle exports manually to avoid issues
-  if (result.includes('export {')) {
-    // Replace the export block with multiline support
+  // Handle exports - be more comprehensive
+  // First handle the complex export block in index.js
+  if (result.includes('// Export main functions and classes')) {
     result = result.replace(
       /\/\/ Export main functions and classes\nexport \{\s*([\s\S]*?)\s*\};\s*\n\n\/\/ Default export\nexport default \{\s*([\s\S]*?)\s*\};?/,
       (match, namedExports, defaultContent) => {
@@ -37,14 +37,22 @@ function convertToCommonJS(content) {
         return `// Export main functions and classes\n${assignments}\n\n// Default export\nmodule.exports = {${defaultContent}};\nmodule.exports.default = module.exports;`;
       }
     );
-  } else if (result.includes('export default') || result.includes('export {')) {
-    // Handle simple exports
-    result = result.replace(/export default ([^;]+);?\s*/g, 'module.exports = $1;\nmodule.exports.default = module.exports;\n');
-    result = result.replace(/export \{\s*([^}]+)\s*\};?\s*/g, (match, exports) => {
-      const exportList = exports.split(',').map(e => e.trim());
-      return exportList.map(e => `module.exports.${e} = ${e};`).join('\n') + '\n';
-    });
   }
+  
+  // Then handle end-of-file exports like in ppk-parser.js
+  // Look for the pattern at the end: export default X;\nexport { Y, Z };
+  result = result.replace(/\/\/ Export the parser and error class\nexport default ([^;]+);\nexport \{\s*([^}]+)\s*\};?\s*$/g, (match, defaultExport, namedExports) => {
+    const exportList = namedExports.split(',').map(e => e.trim());
+    const namedAssignments = exportList.map(e => `module.exports.${e} = ${e};`).join('\n');
+    return `// Export the parser and error class\nmodule.exports = ${defaultExport};\nmodule.exports.default = module.exports;\n${namedAssignments}`;
+  });
+
+  // Catch any remaining export patterns
+  result = result.replace(/export default ([^;]+);?\s*/g, 'module.exports = $1;\nmodule.exports.default = module.exports;\n');
+  result = result.replace(/export \{\s*([^}]+)\s*\};?\s*/g, (match, exports) => {
+    const exportList = exports.split(',').map(e => e.trim());
+    return exportList.map(e => `module.exports.${e} = ${e};`).join('\n') + '\n';
+  });
 
   return result;
 }
